@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
+import random
 from math import sqrt
+
 
 def find_ref_point(points):
     return min(points, key=lambda p: (p[1], p[0]))
@@ -41,6 +43,7 @@ def scan(ordered_points):
     # return stack[:-1]
     return stack
 
+
 def plot_voronoi(points):
     ref_point = find_ref_point(points)
     ordered = order_points(points)
@@ -48,6 +51,27 @@ def plot_voronoi(points):
     fig, ax = plt.subplots()
     ax.plot([p[0] for p in scanned], [p[1] for p in scanned])
     plt.show()
+
+
+def many_plot_tests():
+    fig, ax = plt.subplots(4, 4)
+    for i in range(4):
+        for j in range(4):
+            num_points = random.randint(5, 60)
+            points = []
+            for _ in range(num_points):
+                new_x = random.randint(-100, 100)
+                new_y = random.randint(-100, 100)
+                points.append([new_x, new_y])
+            ordered = order_points(points)
+            scanned = scan(ordered)
+            ax[i, j].plot([p[0] for p in scanned], [p[1] for p in scanned])
+            ax[i, j].plot([p[0] for p in ordered], [p[1] for p in ordered])
+            ax[i, j].scatter([p[0] for p in points], [p[1] for p in points])
+
+    plt.tight_layout()
+    plt.show()
+
 
 # def test(points, expected):
 #     ref_point = find_ref_point(points)
