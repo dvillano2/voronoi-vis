@@ -100,3 +100,4 @@ expected = [[0, 0], [9, 7], [2, 7]]
 
 # PLOTTING
 plot_voronoi(points)
+many_plot_tests()
