@@ -66,8 +66,8 @@ def convex_hull_demo():
 
 
 if __name__ == "__main__":
-    # triangle_membership_demo()
-    convex_hull_demo()
+    triangle_membership_demo()
+    # convex_hull_demo()
 
     # _pts = [[1, 1], [2, 4], [3, 3]]
     # pts = [Point(x, y) for x, y in _pts]
