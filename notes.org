@@ -4,6 +4,7 @@ Done, see convex_hull.py. uses [[https://en.wikipedia.org/wiki/Graham_scan][Grah
 * Delauney triangulation
 ** resources
 - [[https://people.eecs.berkeley.edu/~jrs/274s19/proj.html][Berkeley CG delaunay assigmment spec]]. great overview of necessary pieces!
+- [[https://mediaspace.illinois.edu/media/t/1_qguiqwm4][Illinois highly relevant lecture vid!]]
 - lectures
   - [[https://www.cs.cmu.edu/afs/cs/academic/class/15456-s10/ClassNotes/lecture7.pdf][CMU lecture 7]]. pseudocode in sec 3. history dag overview in sec 6. 
     - [[https://www.cs.cmu.edu/afs/cs/academic/class/15456-s10/ClassNotes/lecture8.pdf][lecture 8]] has history dag diagram but no helpful details
