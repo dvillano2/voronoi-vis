@@ -1,3 +1,4 @@
+from __future__ import annotations
 import matplotlib.pyplot as plt
 import random
 from math import sqrt
@@ -37,6 +38,7 @@ class Point:
 class PointCloud:
     def __init__(self, points: list[Point]):
         self.points = self.sort(points)
+        self.convex_hull = self.get_convex_hull()
 
     def sort(self, points):
         def cos_comp(ref_p: Point, p: Point):
@@ -47,6 +49,17 @@ class PointCloud:
 
         local_ref = min(points, key=lambda p: (p.y, p.x))
         return sorted(points, key=lambda p: cos_comp(local_ref, p))
+
+    def get_convex_hull(self):
+        stack = []
+        for point in self.points + [self.points[0]]:
+            while len(stack) > 1 and not Point.is_left(
+                stack[-2], stack[-1], point
+            ):
+                stack.pop()
+            stack.append(point)
+        # return stack[:-1]
+        return stack
 
 
 class Triangle(PointCloud):
@@ -93,8 +106,40 @@ def triangle_membership_demo():
     plt.show()
 
 
+def convex_hull_demo():
+    fig, ax = plt.subplots(4, 4)
+    for i in range(4):
+        for j in range(4):
+            num_points = random.randint(5, 60)
+            points = []
+            for _ in range(num_points):
+                new_x = random.randint(-100, 100)
+                new_y = random.randint(-100, 100)
+                points.append(Point(new_x, new_y))
+            point_cloud = PointCloud(points)
+            # ordered = order_points(points)
+            # scanned = scan(ordered)
+            ax[i, j].plot(
+                [p.x for p in point_cloud.convex_hull],
+                [p.y for p in point_cloud.convex_hull],
+            )
+            ax[i, j].plot(
+                [p.x for p in point_cloud.points],
+                [p.y for p in point_cloud.points],
+            )
+            ax[i, j].scatter(
+                [p.x for p in point_cloud.points],
+                [p.y for p in point_cloud.points],
+            )
+
+    plt.tight_layout()
+    plt.show()
+
+
 if __name__ == "__main__":
-    triangle_membership_demo()
+    # triangle_membership_demo()
+    convex_hull_demo()
+
     # _pts = [[1, 1], [2, 4], [3, 3]]
     # pts = [Point(x, y) for x, y in _pts]
     # cloud = PointCloud(pts)
