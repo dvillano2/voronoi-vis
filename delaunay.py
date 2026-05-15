@@ -13,16 +13,13 @@ class Point:
     x: int
     y: int
 
-def point_add(p: Point, q: Point):
-    return Point(p.x + q.x, p.y + q.y)
+    @staticmethod
+    def dot(p: Point, q: Point):
+        return p.x * q.x + p.y * q.y
 
-
-def point_sub(p: Point, q: Point):
-    return Point(p.x - q.x, p.y - q.y)
-
-
-def point_dot(p: Point, q: Point):
-    return p.x * q.x + p.y * q.y
+    @staticmethod
+    def sub(p: Point, q: Point):
+        return Point(p.x - q.x, p.y - q.y)
 
 
 class PointCloud:
@@ -48,9 +45,9 @@ class Triangle(PointCloud):
     def inside(self, x: Point):
         last_point_added = self.points + [self.points[0]]
         for point, next_point in zip(last_point_added, last_point_added[1:]):
-            direction = point_sub(next_point, point)
+            direction = Point.sub(next_point, point)
             orthogonal = Point(-direction.y, direction.x)
-            if not point_dot(x, orthogonal) > point_dot(point, orthogonal):
+            if not Point.dot(x, orthogonal) > Point.dot(point, orthogonal):
                 return False
         return True
 
@@ -60,11 +57,11 @@ class Triangle(PointCloud):
 #        pts = sorted([p, q], key=lambda pp: (pp.y, pp.x))
 #        self.base = pts[0]
 #        self.far = pts[1]
-#        self.direction = point_sub(self.far, self.base)
+#        self.direction = Point.sub(self.far, self.base)
 #        self.orthogonal = Point(-self.direction.y, self.direction.x)
 #
 #    def is_left(self, p: Point):
-#        return point_dot(p, self.orthogonal) > point_dot(
+#        return Point.dot(p, self.orthogonal) > Point.dot(
 #            self.base, self.orthogonal
 #        )
 
