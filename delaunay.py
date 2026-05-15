@@ -1,8 +1,8 @@
 from __future__ import annotations
-import matplotlib.pyplot as plt
 import random
 from math import sqrt
 from dataclasses import dataclass
+import matplotlib.pyplot as plt
 
 """
 assumptions:
