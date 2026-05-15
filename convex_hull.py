@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import random
 from math import sqrt
+from delaunay import Point
 
 
 def find_ref_point(points):

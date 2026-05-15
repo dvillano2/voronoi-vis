@@ -8,6 +8,7 @@ assumptions:
 - general (no 3 pts on line, )
 """
 
+
 @dataclass
 class Point:
     x: int
@@ -21,10 +22,20 @@ class Point:
     def sub(p: Point, q: Point):
         return Point(p.x - q.x, p.y - q.y)
 
+    @staticmethod
+    def orthogonal(p: Point, q: Point):
+        direction = Point.sub(q, p)
+        return Point(-direction.y, direction.x)
+
+    @staticmethod
+    def is_left(p: Point, q: Point, x: Point):
+        base_orthogonal = Point.orthogonal(p, q)
+        new_direction = Point.sub(x, q)
+        return Point.dot(base_orthogonal, new_direction) > 0
+
 
 class PointCloud:
     def __init__(self, points: list[Point]):
-        # self.points = points
         self.points = self.sort(points)
 
     def sort(self, points):
@@ -45,25 +56,9 @@ class Triangle(PointCloud):
     def inside(self, x: Point):
         last_point_added = self.points + [self.points[0]]
         for point, next_point in zip(last_point_added, last_point_added[1:]):
-            direction = Point.sub(next_point, point)
-            orthogonal = Point(-direction.y, direction.x)
-            if not Point.dot(x, orthogonal) > Point.dot(point, orthogonal):
+            if not Point.is_left(point, next_point, x):
                 return False
         return True
-
-
-# class Segment:
-#    def __init__(self, p: Point, q: Point):
-#        pts = sorted([p, q], key=lambda pp: (pp.y, pp.x))
-#        self.base = pts[0]
-#        self.far = pts[1]
-#        self.direction = Point.sub(self.far, self.base)
-#        self.orthogonal = Point(-self.direction.y, self.direction.x)
-#
-#    def is_left(self, p: Point):
-#        return Point.dot(p, self.orthogonal) > Point.dot(
-#            self.base, self.orthogonal
-#        )
 
 
 def triangle_membership_demo():
@@ -80,9 +75,19 @@ def triangle_membership_demo():
             points = points[3:]
 
             t = Triangle(*triangle_points[:-1])
-            ax[i, j].plot([p.x for p in triangle_points], [p.y for p in triangle_points])
-            ax[i, j].scatter([p.x for p in points if t.inside(p)], [p.y for p in points if t.inside(p)], c='r')
-            ax[i, j].scatter([p.x for p in points if not t.inside(p)], [p.y for p in points if not t.inside(p)], c='b')
+            ax[i, j].plot(
+                [p.x for p in triangle_points], [p.y for p in triangle_points]
+            )
+            ax[i, j].scatter(
+                [p.x for p in points if t.inside(p)],
+                [p.y for p in points if t.inside(p)],
+                c="r",
+            )
+            ax[i, j].scatter(
+                [p.x for p in points if not t.inside(p)],
+                [p.y for p in points if not t.inside(p)],
+                c="b",
+            )
 
     plt.tight_layout()
     plt.show()
@@ -98,4 +103,3 @@ if __name__ == "__main__":
     # print(triangle.inside(Point(2, 3)))
     # print(triangle.inside(Point(2, 5)))
     # # print(cloud.points)
-    
