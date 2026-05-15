@@ -1,5 +1,6 @@
 from math import sqrt
 from convex_hull import ordered_points
+from dataclasses import dataclass
 
 """
 assumptions:
@@ -10,13 +11,23 @@ assumptions:
 
 """
 
-from dataclasses import dataclass
-
 
 @dataclass
 class Point:
     x: int
     y: int
+
+
+def point_add(p: Point, q: Point):
+    return Point(p.x + q.x, p.y + q.y)
+
+
+def point_sub(p: Point, q: Point):
+    return Point(p.x - q.x, p.y - q.y)
+
+
+def point_dot(p: Point, q: Point):
+    return p.x * q.x + p.y * q.y
 
 
 class PointCloud:
@@ -40,22 +51,13 @@ class Triangle(PointCloud):
         super().__init__([p, q, r])
 
     def inside(self, x: Point):
-        for seg in self.segments:
-            if not seg.is_left(x):
+        last_point_added = self.points + [self.points[0]]
+        for point, next_point in zip(last_point_added, last_point_added[1:]):
+            direction = point_sub(next_point, point)
+            orthogonal = Point(-direction.y, direction.x)
+            if not point_dot(x, orthogonal) > point_dot(point, orthogonal):
                 return False
         return True
-
-
-def point_add(p: Point, q: Point):
-    return Point(p.x + q.x, p.y + q.y)
-
-
-def point_sub(p: Point, q: Point):
-    return Point(p.x - q.x, p.y - q.y)
-
-
-def point_dot(p: Point, q: Point):
-    return p.x * q.x + p.y * q.y
 
 
 # class Segment:
