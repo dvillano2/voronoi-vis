@@ -43,9 +43,12 @@ def scan(ordered_points):
     # return stack[:-1]
     return stack
 
+def get_convex_hull(points):
+    ordered = order_points(points)
+    return scan(ordered)
+
 
 def plot_voronoi(points):
-    ref_point = find_ref_point(points)
     ordered = order_points(points)
     scanned = scan(ordered)
     fig, ax = plt.subplots()
