@@ -37,7 +37,9 @@ class Point:
 
 class PointCloud:
     def __init__(self, points: list[Point]):
+        # points sorted by cos relative to bottommost point
         self.points = self.sort(points)
+        # points on convex hull, cyclic from bottommost point.
         self.convex_hull = self.get_convex_hull()
 
     def sort(self, points):
@@ -58,8 +60,8 @@ class PointCloud:
             ):
                 stack.pop()
             stack.append(point)
-        # return stack[:-1]
-        return stack
+        return stack[:-1]
+        # return stack
 
 
 class Triangle(PointCloud):

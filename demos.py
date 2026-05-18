@@ -46,11 +46,12 @@ def convex_hull_demo():
                 new_y = random.randint(-100, 100)
                 points.append(Point(new_x, new_y))
             point_cloud = PointCloud(points)
+            hull = point_cloud.convex_hull + [point_cloud.convex_hull[0]]
             # ordered = order_points(points)
             # scanned = scan(ordered)
             ax[i, j].plot(
-                [p.x for p in point_cloud.convex_hull],
-                [p.y for p in point_cloud.convex_hull],
+                [p.x for p in hull],
+                [p.y for p in hull],
             )
             ax[i, j].plot(
                 [p.x for p in point_cloud.points],
@@ -66,8 +67,8 @@ def convex_hull_demo():
 
 
 if __name__ == "__main__":
-    triangle_membership_demo()
-    # convex_hull_demo()
+    # triangle_membership_demo()
+    convex_hull_demo()
 
     # _pts = [[1, 1], [2, 4], [3, 3]]
     # pts = [Point(x, y) for x, y in _pts]

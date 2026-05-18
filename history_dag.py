@@ -1,5 +1,16 @@
 from delaunay import Point, PointCloud, Triangle
 
+# plan:
+# - test subdivide
+# - initial fan hull
+# - add k initial triangles of fan as root nodes
+# - Dag query test
+# - impl flip + test single call
+# - full alg
+
+# fan hull
+# - 
+
 
 class TriangleNode:
     def __init__(self, triangle):
@@ -25,8 +36,13 @@ class TriangleNode:
 
 
 class HistoryDAG:
-    def __init__(self, points: PointCloud):
-        self.points = points
+    def __init__(self, cloud: PointCloud):
+        self.cloud = cloud
+        self._setup_root_triangles()
+
+    def _setup_root_triangles(self):
+        for i in range(3, len(self.cloud.convex_hull))
+        
 
     # QUESTION: how to start top of dag, with fanned triangles or convex hull?
     # or something else?
