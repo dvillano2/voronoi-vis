@@ -36,7 +36,6 @@ def triangle_membership_demo():
     plt.show()
 
 
-
 def convex_hull_demo():
     fig, ax = plt.subplots(4, 4)
     for i in range(4):
@@ -65,6 +64,7 @@ def convex_hull_demo():
     plt.tight_layout()
     plt.show()
 
+
 def fan_demo():
     fig, ax = plt.subplots(4, 4)
     for i in range(4):
@@ -77,10 +77,52 @@ def fan_demo():
                 points.append(Point(new_x, new_y))
             point_cloud = PointCloud(points)
             dag = HistoryDAG(point_cloud)
-            ax[i,j].plot(
-                [p.x for t in dag.root.children for p in t.triangle.points + [t.triangle.points[0]]],
-                [p.y for t in dag.root.children for p in t.triangle.points + [t.triangle.points[0]]],
+            ax[i, j].plot(
+                [
+                    p.x
+                    for t in dag.root.children
+                    for p in t.triangle.points + [t.triangle.points[0]]
+                ],
+                [
+                    p.y
+                    for t in dag.root.children
+                    for p in t.triangle.points + [t.triangle.points[0]]
+                ],
             )
+            ax[i, j].scatter(
+                [p.x for p in point_cloud.points],
+                [p.y for p in point_cloud.points],
+            )
+
+    plt.tight_layout()
+    plt.show()
+
+
+def DAG_subdivide_demo():
+    fig, ax = plt.subplots(4, 4)
+    for i in range(4):
+        for j in range(4):
+            num_points = 4
+            ch_triangle = False
+            while not ch_triangle:
+                points = []
+                for _ in range(num_points):
+                    new_x = random.randint(-100, 100)
+                    new_y = random.randint(-100, 100)
+                    points.append(Point(new_x, new_y))
+                point_cloud = PointCloud(points)
+                ch_triangle = len(point_cloud.convex_hull) == 3
+            dag = HistoryDAG(point_cloud)
+            for p in point_cloud.points:
+                if p not in point_cloud.convex_hull:
+                    dag.insert(p)
+                    break
+            for t_node in dag.root.children[0].children:
+                t = t_node.triangle
+                ax[i, j].plot(
+                    [p.x for p in t.points + [t.points[0]]],
+                    [p.y for p in t.points + [t.points[0]]],
+                )
             ax[i, j].scatter(
                 [p.x for p in point_cloud.points],
                 [p.y for p in point_cloud.points],
@@ -93,7 +135,8 @@ def fan_demo():
 if __name__ == "__main__":
     # triangle_membership_demo()
     # convex_hull_demo()
-    fan_demo()
+    # fan_demo()
+    DAG_subdivide_demo()
 
     # _pts = [[1, 1], [2, 4], [3, 3]]
     # pts = [Point(x, y) for x, y in _pts]

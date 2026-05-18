@@ -1,31 +1,30 @@
 from delaunay import Point, PointCloud, Triangle
+from typing import Optional
 
-# done: 
+# done:
 # - initial fan hull
+# - test subdivide
 
 # plan:
-# - test subdivide
 # - Dag query test
 # - impl flip + test single call
 # - full alg
 
-# fan hull
-# - 
-
 # backlog:
 # - make triangleNode subclass triangle for ergonomics
 # - no point cloud. use inf triangle.
+# - condsider moving containment next node fundtion to DAG if only used once
+# - tree leaves function
+
 
 class TriangleNode:
-    def __init__(self, triangle: Triangle):
+    def __init__(self, triangle: Optional[Triangle]):
         self.triangle = triangle
         self.children = []
 
-    def walk_to_child(self, x: Point):
-        if not self.children:
-            return self
+    def get_containing_child(self, x: Point):
         for child in self.children:
-            if child.contains(x):
+            if child.triangle.contains(x):
                 return child
         return None
 
@@ -36,7 +35,8 @@ class TriangleNode:
             )
         looped_points = self.triangle.points + [self.triangle.points[0]]
         for y, z in zip(looped_points, looped_points[1:]):
-            self.children.append(Triangle(x, y, z))
+            tri = Triangle(x, y, z)
+            self.children.append(TriangleNode(tri))
 
 
 class HistoryDAG:
@@ -48,21 +48,15 @@ class HistoryDAG:
     def _get_root_triangles(self):
         hull = self.cloud.convex_hull
         ref_pt = hull[0]
-        pairs = zip(hull[1:], hull[2:]) 
+        pairs = zip(hull[1:], hull[2:])
         return [TriangleNode(Triangle(ref_pt, p, q)) for p, q in pairs]
 
-    def get_leaf(self, node: TriangleNode, p: Point):
-        if node != None and not node.children:
-            return node
-        for child in node.children:
-            if child.contains(p):
-                return get_leaf(child, p)
+    def get_leaf(self, x: Point):
+        node = self.root
+        while next_node := node.get_containing_child(x):
+            node = next_node
+        return node
 
     def insert(self, p: Point):
-        node = self.root
-
-        # while node != (succ := node.walk_to_child(p)):
-        #     node = succ
-
-        
-        
+        leaf = self.get_leaf(p)
+        leaf.subdivide(p)
