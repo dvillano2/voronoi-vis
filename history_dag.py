@@ -11,9 +11,8 @@ from delaunay import Point, PointCloud, Triangle
 # fan hull
 # - 
 
-
 class TriangleNode:
-    def __init__(self, triangle):
+    def __init__(self, triangle: Triangle):
         self.triangle = triangle
         self.children = []
 
@@ -38,11 +37,11 @@ class TriangleNode:
 class HistoryDAG:
     def __init__(self, cloud: PointCloud):
         self.cloud = cloud
-        self._setup_root_triangles()
+        self.root = TriangleNode(None)
+        self.root.children = self._get_root_triangles()
 
-    def _setup_root_triangles(self):
-        for i in range(3, len(self.cloud.convex_hull))
-        
-
-    # QUESTION: how to start top of dag, with fanned triangles or convex hull?
-    # or something else?
+    def _get_root_triangles(self):
+        hull = self.cloud.convex_hull
+        ref_pt = hull[0]
+        pairs = zip(hull[1:], hull[2:]) 
+        return [Triangle(ref_pt, p, q) for p, q in pairs]
