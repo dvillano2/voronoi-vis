@@ -1,5 +1,5 @@
 from delaunay import Point, PointCloud, Triangle
-from typing import Optional
+import numpy as np
 
 # done:
 # - initial fan hull
@@ -19,7 +19,7 @@ from typing import Optional
 
 
 class TriangleNode:
-    def __init__(self, triangle: Optional[Triangle]):
+    def __init__(self, triangle: Triangle):
         self.triangle = triangle
         self.children = []
 
@@ -39,18 +39,29 @@ class TriangleNode:
             tri = Triangle(x, y, z)
             self.children.append(TriangleNode(tri))
 
+class Edge:
+    def __init__(self, p: Point, q: Point):
+        self.points = tuple(sorted([p, q]))
+
 
 class HistoryDAG:
     def __init__(self, cloud: PointCloud):
         self.cloud = cloud
         self.root = TriangleNode(None)
+        self.edge_to_tris= {} 
         self.root.children = self._get_root_triangles()
 
     def _get_root_triangles(self):
         hull = self.cloud.convex_hull
         ref_pt = hull[0]
         pairs = zip(hull[1:], hull[2:])
-        return [TriangleNode(Triangle(ref_pt, p, q)) for p, q in pairs]
+        children = []
+        for p, q in pairs:
+            new_triangle = TriangleNode(Triangle(ref_pt, p, q))
+            if children:
+                self.edge_to_tris[Edge(ref_pt, p)] = [new_triangle, children[-1]]
+            children.append(new_triangle)
+        return children
 
     def get_leaf(self, x: Point):
         node = self.root
@@ -61,8 +72,17 @@ class HistoryDAG:
     def insert(self, p: Point):
         leaf = self.get_leaf(p)
         leaf.subdivide(p)
+        neighbors = triangle_neighbors[leaf]
+        for neighbor, e in neighbors:
+            p0, p1 = e
+            for high_deg_neighbor, _ in triangle_neighbors[neighbor]:
 
-    def flip(self, t: TriangleNode, r: TriangleNode, e: [Point, Point]):
+            if 
+            
+
+        return leaf.children
+
+    def flip(self, t: TriangleNode, r: TriangleNode, e: list[Point]):
         tx = t.triangle.get_opp_point(*e)
         rx = r.triangle.get_opp_point(*e)
         new_node0 = TriangleNode(Triangle(tx, rx, e[0]))
@@ -71,4 +91,16 @@ class HistoryDAG:
         t.children = new_nodes
         r.children = new_nodes
         return
+
+    def circle_test(t: TriangleNode, r: TriangleNode, e: list[Point]):
+        def pull_coords(p: Point):
+            return [p.x, p.y, p.x**2 + p.y**2, 1]
+
+        triangle_coords = [pull_coords(p) for p in t.triangle.points]
+        last_point = r.triangle.get_opp_point(*e)
+        matrix = np.array(triangle_coords + pull_coords(last_point))
+        return np.linalg.det(matrix) > 0
+
+    def local_flips(self, p: Point, triangles: list[TriangleNodes]):
+
 
