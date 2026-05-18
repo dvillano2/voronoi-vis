@@ -15,6 +15,7 @@ from typing import Optional
 # - no point cloud. use inf triangle.
 # - condsider moving containment next node fundtion to DAG if only used once
 # - tree leaves function
+# - track whick points have been added, (to avoid dupes, hull points)
 
 
 class TriangleNode:
@@ -60,3 +61,14 @@ class HistoryDAG:
     def insert(self, p: Point):
         leaf = self.get_leaf(p)
         leaf.subdivide(p)
+
+    def flip(self, t: TriangleNode, r: TriangleNode, e: [Point, Point]):
+        tx = t.triangle.get_opp_point(*e)
+        rx = r.triangle.get_opp_point(*e)
+        new_node0 = TriangleNode(Triangle(tx, rx, e[0]))
+        new_node1 = TriangleNode(Triangle(tx, rx, e[1]))
+        new_nodes = [new_node0, new_node1]
+        t.children = new_nodes
+        r.children = new_nodes
+        return
+

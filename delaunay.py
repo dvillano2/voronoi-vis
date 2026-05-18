@@ -75,6 +75,11 @@ class Triangle(PointCloud):
                 return False
         return True
 
+    def get_opp_point(self, x: Point, y: Point):
+        if x not in self.points or y not in self.points:
+            raise ValueError("points must be vertices of triangle")
+        return [z for z in self.points if z not in [x, y]][0]
+
 
 if __name__ == "__main__":
     pass
