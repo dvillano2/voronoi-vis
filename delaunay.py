@@ -10,7 +10,7 @@ assumptions:
 """
 
 
-@dataclass
+@dataclass(frozen=True)
 class Point:
     x: int
     y: int
@@ -42,9 +42,21 @@ class Point:
         return self.y < other.y
 
 
+# note: i define eq and hash below, but @dataclass(frozen=True) is same.
+# and you can define a __post_init__
 class Edge:
     def __init__(self, p: Point, q: Point):
-        self.points = tuple(sorted([p, q]))
+        self.points = tuple(sorted((p, q)))
+
+    # for debug only
+    def __repr__(self):
+        return f'Edge({self.points[0]}, {self.points[1]})'
+
+    def __eq__(self, other):
+        return isinstance(other, Edge) and self.points == other.points
+
+    def __hash__(self):
+        return hash(self.points)
 
 
 class PointCloud:

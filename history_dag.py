@@ -45,23 +45,78 @@ class HistoryDAG:
         self.cloud = cloud
         self.root = TriangleNode(None)
         self.edge_to_tris = {}
-        self.root.children = self._get_root_triangles()
+        # self.root.children = self._get_root_triangles()
+        self._setup_root_triangles()
 
-    def _get_root_triangles(self):
+    def _setup_root_triangles(self):
         hull = self.cloud.convex_hull
         ref_pt = hull[0]
         pairs = zip(hull[1:], hull[2:])
 
-        children = []
-        for p, q in pairs:
+        print("\n")
+        for i, (p, q) in enumerate(pairs):
+            print(i)
             new_triangle = TriangleNode(Triangle(ref_pt, p, q))
-            if children:
+            if i > 0:
                 self.edge_to_tris[Edge(ref_pt, p)] = [
                     new_triangle,
-                    children[-1],
+                    self.root.children[-1]
                 ]
-            children.append(new_triangle)
-        return children
+            self.root.children.append(new_triangle)
+            # new: enforce delaunay at each step
+            self.enforce_delaunay(q, [new_triangle])
+
+        # debug print - are edges correct? alg is never getting an opp edge in the map
+
+    def enforce_delaunay(self, p: Point, cands: list[TriangleNode]):
+        stack = [tn for tn in cands]
+        while stack:
+            node = stack.pop()
+            if node.children:
+                raise ValueError("assertion: only leaf triangles should be enforced")
+                # continue
+            opp_edge = node.triangle.get_opp_edge(p)
+            if opp_edge not in self.edge_to_tris:
+                print("enforce_delaunay: early exit on conv hull edge")
+                continue
+            t, r = self.edge_to_tris[opp_edge]
+            if not circle_test(t, r, [opp_edge.points[0], opp_edge.points[1]]):
+                new_nodes = self.flip(
+                    t, r, [opp_edge.points[0], opp_edge.points[1]]
+                )
+                stack += new_nodes
+            else:
+                print("enforce_delaunay: circle test passed")
+
+    def flip(self, t: TriangleNode, r: TriangleNode, e: list[Point]):
+        # print("flipped an edge!!!!!!!!!!")
+        raise ValueError("FLIPPED! WOO!")
+        tx = t.triangle.get_opp_point(*e)
+        rx = r.triangle.get_opp_point(*e)
+        new_node0 = TriangleNode(Triangle(tx, rx, e[0]))
+        new_node1 = TriangleNode(Triangle(tx, rx, e[1]))
+        new_nodes = [new_node0, new_node1]
+        t.children = new_nodes
+        r.children = new_nodes
+
+        edge = Edge(e[0], e[1])
+        del self.edge_to_tris[edge]
+        self.edge_to_tris[Edge(tx, rx)] = new_nodes
+        return new_nodes
+
+    def get_leaves(self):
+        seen = set()
+        res = []
+        stack = [self.root]
+        while stack:
+            node = stack.pop()
+            if node in seen:
+                continue
+            if not node.children:
+                res.append(node)
+            else:
+                stack += node.children
+        return res
 
     def get_leaf(self, x: Point):
         node = self.root
@@ -92,48 +147,6 @@ class HistoryDAG:
         self.enforce_delaunay(p, leaf.children)
 
         return leaf.children
-
-    def enforce_delaunay(self, p: Point, cands: list[TriangleNode]):
-        stack = [tn for tn in cands]
-        while stack:
-            node = stack.pop()
-            opp_edge = node.triangle.get_opp_edge(p)
-            if opp_edge not in self.edge_to_tris:
-                continue
-            t, r = self.edge_to_tris[opp_edge]
-            if not circle_test(t, r, [opp_edge.points[0], opp_edge.points[1]]):
-                new_nodes = self.flip(
-                    t, r, [opp_edge.points[0], opp_edge.points[1]]
-                )
-                stack += new_nodes
-
-    def flip(self, t: TriangleNode, r: TriangleNode, e: list[Point]):
-        tx = t.triangle.get_opp_point(*e)
-        rx = r.triangle.get_opp_point(*e)
-        new_node0 = TriangleNode(Triangle(tx, rx, e[0]))
-        new_node1 = TriangleNode(Triangle(tx, rx, e[1]))
-        new_nodes = [new_node0, new_node1]
-        t.children = new_nodes
-        r.children = new_nodes
-
-        edge = Edge(e[0], e[1])
-        del self.edge_to_tris[edge]
-        self.edge_to_tris[Edge(tx, rx)] = new_nodes
-        return new_nodes
-
-    def get_leaves(self):
-        seen = set()
-        res = []
-        stack = [self.root]
-        while stack:
-            node = stack.pop()
-            if node in seen:
-                continue
-            if not node.children:
-                res.append(node)
-            else:
-                stack += node.children
-        return res
 
 
 def circle_test(t: TriangleNode, r: TriangleNode, e: list[Point]):

@@ -97,6 +97,41 @@ def fan_demo():
     plt.tight_layout()
     plt.show()
 
+# side-by-side of fan and corrected fan
+def corrected_fan_demo():
+    fig, ax = plt.subplots(4, 2)
+    for i in range(4):
+        num_points = random.randint(5, 60)
+        points = []
+        for _ in range(num_points):
+            new_x = random.randint(-100, 100)
+            new_y = random.randint(-100, 100)
+            points.append(Point(new_x, new_y))
+
+        point_cloud = PointCloud(points)
+        dag = HistoryDAG(point_cloud)
+        leaves = dag.get_leaves()
+        for j, nodes in enumerate([dag.root.children, leaves]):
+            ax[i, j].plot(
+                [
+                    p.x
+                    for t in nodes
+                    for p in t.triangle.points + [t.triangle.points[0]]
+                ],
+                [
+                    p.y
+                    for t in nodes
+                    for p in t.triangle.points + [t.triangle.points[0]]
+                ],
+            )
+            ax[i, j].scatter(
+                [p.x for p in point_cloud.points],
+                [p.y for p in point_cloud.points],
+            )
+
+    plt.tight_layout()
+    plt.show()
+
 
 def DAG_subdivide_demo():
     fig, ax = plt.subplots(4, 4)
@@ -177,14 +212,6 @@ if __name__ == "__main__":
     # triangle_membership_demo()
     # convex_hull_demo()
     # fan_demo()
+    corrected_fan_demo()
     # DAG_subdivide_demo()
-    two_subdivide_demo()
-
-    # _pts = [[1, 1], [2, 4], [3, 3]]
-    # pts = [Point(x, y) for x, y in _pts]
-    # cloud = PointCloud(pts)
-    # triangle = Triangle(*pts)
-    # # print(triangle.points)
-    # print(triangle.inside(Point(2, 3)))
-    # print(triangle.inside(Point(2, 5)))
-    # # print(cloud.points)
+    # two_subdivide_demo()
