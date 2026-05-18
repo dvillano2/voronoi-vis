@@ -34,9 +34,18 @@ class Point:
         new_direction = Point.sub(x, q)
         return Point.dot(base_orthogonal, new_direction) > 0
 
+    def __lt__(self, other: Point):
+        if self.x < other.x:
+            return True
+        if self.x > other.x:
+            return False
+        return self.y < other.y
+
+
 class Edge:
     def __init__(self, p: Point, q: Point):
         self.points = tuple(sorted([p, q]))
+
 
 class PointCloud:
     def __init__(self, points: list[Point]):
@@ -68,7 +77,10 @@ class PointCloud:
 
     def get_hull_edges(self):
         return [
-            Edge(p, q) for p, q in zip(self.convex_hull, self.convex_hull[1:] + [self.convex_hull[0]])
+            Edge(p, q)
+            for p, q in zip(
+                self.convex_hull, self.convex_hull[1:] + [self.convex_hull[0]]
+            )
         ]
 
 
@@ -89,7 +101,7 @@ class Triangle(PointCloud):
         return [z for z in self.points if z not in [x, y]][0]
 
     def get_opp_edge(self, p: Point):
-        if p not in self.points: 
+        if p not in self.points:
             raise ValueError("points must be vertices of triangle")
         return Edge(*[z for z in self.points if z != p])
 

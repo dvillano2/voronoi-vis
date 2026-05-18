@@ -1,5 +1,5 @@
-from delaunay import Edge, Point, PointCloud, Triangle
 import numpy as np
+from delaunay import Edge, Point, PointCloud, Triangle
 
 # done:
 # - initial fan hull
@@ -39,11 +39,12 @@ class TriangleNode:
             tri = Triangle(x, y, z)
             self.children.append(TriangleNode(tri))
 
+
 class HistoryDAG:
     def __init__(self, cloud: PointCloud):
         self.cloud = cloud
         self.root = TriangleNode(None)
-        self.edge_to_tris= {} 
+        self.edge_to_tris = {}
         self.root.children = self._get_root_triangles()
 
     def _get_root_triangles(self):
@@ -55,7 +56,10 @@ class HistoryDAG:
         for p, q in pairs:
             new_triangle = TriangleNode(Triangle(ref_pt, p, q))
             if children:
-                self.edge_to_tris[Edge(ref_pt, p)] = [new_triangle, children[-1]]
+                self.edge_to_tris[Edge(ref_pt, p)] = [
+                    new_triangle,
+                    children[-1],
+                ]
             children.append(new_triangle)
         return children
 
@@ -72,12 +76,17 @@ class HistoryDAG:
         for child in leaf.children:
             e = child.triangle.get_opp_edge(p)
             if e in self.edge_to_tris:
+                v = self.edge_to_tris[e]
                 outer_tri = v[1] if v[0] == leaf else v[1]
                 self.edge_to_tris[e] = [outer_tri, child]
         # update inner edges adjacencies
         for q in leaf.triangle.points:
             e = Edge(p, q)
-            tris = [tn for tn in leaf.children if p in tn.triangle.points and q in tn.triangle.points]
+            tris = [
+                tn
+                for tn in leaf.children
+                if p in tn.triangle.points and q in tn.triangle.points
+            ]
             self.edge_to_tris[e] = tris
 
         self.enforce_delaunay(p, leaf.children)
@@ -89,10 +98,14 @@ class HistoryDAG:
         while stack:
             node = stack.pop()
             opp_edge = node.triangle.get_opp_edge(p)
+            if opp_edge not in self.edge_to_tris:
+                continue
             t, r = self.edge_to_tris[opp_edge]
             if not circle_test(t, r, [opp_edge.points[0], opp_edge.points[1]]):
-               new_nodes = flip(t, r, [opp_edge.points[0], opp_edge.points[1]])
-               stack += new_nodes
+                new_nodes = self.flip(
+                    t, r, [opp_edge.points[0], opp_edge.points[1]]
+                )
+                stack += new_nodes
 
     def flip(self, t: TriangleNode, r: TriangleNode, e: list[Point]):
         tx = t.triangle.get_opp_point(*e)
@@ -108,11 +121,26 @@ class HistoryDAG:
         self.edge_to_tris[Edge(tx, rx)] = new_nodes
         return new_nodes
 
-    def circle_test(t: TriangleNode, r: TriangleNode, e: list[Point]):
-        def pull_coords(p: Point):
-            return [p.x, p.y, p.x**2 + p.y**2, 1]
+    def get_leaves(self):
+        seen = set()
+        res = []
+        stack = [self.root]
+        while stack:
+            node = stack.pop()
+            if node in seen:
+                continue
+            if not node.children:
+                res.append(node)
+            else:
+                stack += node.children
+        return res
 
-        triangle_coords = [pull_coords(p) for p in t.triangle.points]
-        last_point = r.triangle.get_opp_point(*e)
-        matrix = np.array(triangle_coords + pull_coords(last_point))
-        return np.linalg.det(matrix) > 0
+
+def circle_test(t: TriangleNode, r: TriangleNode, e: list[Point]):
+    def pull_coords(p: Point):
+        return [p.x, p.y, p.x**2 + p.y**2, 1]
+
+    triangle_coords = [pull_coords(p) for p in t.triangle.points]
+    last_point = r.triangle.get_opp_point(*e)
+    matrix = np.array(triangle_coords + pull_coords(last_point))
+    return np.linalg.det(matrix) > 0
