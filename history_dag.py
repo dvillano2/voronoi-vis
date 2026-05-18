@@ -1,15 +1,20 @@
 from delaunay import Point, PointCloud, Triangle
 
+# done: 
+# - initial fan hull
+
 # plan:
 # - test subdivide
-# - initial fan hull
-# - add k initial triangles of fan as root nodes
 # - Dag query test
 # - impl flip + test single call
 # - full alg
 
 # fan hull
 # - 
+
+# backlog:
+# - make triangleNode subclass triangle for ergonomics
+# - no point cloud. use inf triangle.
 
 class TriangleNode:
     def __init__(self, triangle: Triangle):
@@ -20,12 +25,12 @@ class TriangleNode:
         if not self.children:
             return self
         for child in self.children:
-            if child.inside(x):
+            if child.contains(x):
                 return child
         return None
 
     def subdivide(self, x: Point):
-        if not self.triangle.inside(x):
+        if not self.triangle.contains(x):
             raise ValueError(
                 "To subdivide triangle with x, x must be inside the triangle"
             )
@@ -44,4 +49,20 @@ class HistoryDAG:
         hull = self.cloud.convex_hull
         ref_pt = hull[0]
         pairs = zip(hull[1:], hull[2:]) 
-        return [Triangle(ref_pt, p, q) for p, q in pairs]
+        return [TriangleNode(Triangle(ref_pt, p, q)) for p, q in pairs]
+
+    def get_leaf(self, node: TriangleNode, p: Point):
+        if node != None and not node.children:
+            return node
+        for child in node.children:
+            if child.contains(p):
+                return get_leaf(child, p)
+
+    def insert(self, p: Point):
+        node = self.root
+
+        # while node != (succ := node.walk_to_child(p)):
+        #     node = succ
+
+        
+        

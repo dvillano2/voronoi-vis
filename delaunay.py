@@ -68,7 +68,7 @@ class Triangle(PointCloud):
     def __init__(self, p: Point, q: Point, r: Point):
         super().__init__([p, q, r])
 
-    def inside(self, x: Point):
+    def contains(self, x: Point):
         last_point_added = self.points + [self.points[0]]
         for point, next_point in zip(last_point_added, last_point_added[1:]):
             if not Point.is_left(point, next_point, x):
@@ -86,6 +86,6 @@ if __name__ == "__main__":
     # cloud = PointCloud(pts)
     # triangle = Triangle(*pts)
     # # print(triangle.points)
-    # print(triangle.inside(Point(2, 3)))
-    # print(triangle.inside(Point(2, 5)))
+    # print(triangle.contains(Point(2, 3)))
+    # print(triangle.contains(Point(2, 5)))
     # # print(cloud.points)
