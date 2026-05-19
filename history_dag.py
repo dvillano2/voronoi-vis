@@ -60,7 +60,7 @@ class HistoryDAG:
             if i > 0:
                 self.edge_to_tris[Edge(ref_pt, p)] = [
                     new_triangle,
-                    self.root.children[-1]
+                    self.root.children[-1],
                 ]
             self.root.children.append(new_triangle)
             # new: enforce delaunay at each step
@@ -73,7 +73,9 @@ class HistoryDAG:
         while stack:
             node = stack.pop()
             if node.children:
-                raise ValueError("assertion: only leaf triangles should be enforced")
+                raise ValueError(
+                    "assertion: only leaf triangles should be enforced"
+                )
                 # continue
             opp_edge = node.triangle.get_opp_edge(p)
             if opp_edge not in self.edge_to_tris:
@@ -155,5 +157,10 @@ def circle_test(t: TriangleNode, r: TriangleNode, e: list[Point]):
 
     triangle_coords = [pull_coords(p) for p in t.triangle.points]
     last_point = r.triangle.get_opp_point(*e)
-    matrix = np.array(triangle_coords + pull_coords(last_point))
+    print(triangle_coords)
+    print(last_point)
+    print(pull_coords(last_point))
+    print(triangle_coords + [pull_coords(last_point)])
+    matrix = np.array(triangle_coords + [pull_coords(last_point)])
+
     return np.linalg.det(matrix) > 0
