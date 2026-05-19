@@ -15,7 +15,7 @@ from delaunay import Edge, Point, PointCloud, Triangle
 # - no point cloud. use inf triangle.
 # - condsider moving containment next node fundtion to DAG if only used once
 # - tree leaves function
-# - track whick points have been added, (to avoid dupes, hull points)
+# - track which points have been added, (to avoid dupes, hull points)
 
 
 class TriangleNode:
@@ -64,18 +64,29 @@ class HistoryDAG:
                 ]
             self.root.children.append(new_triangle)
 
-        for p in hull:
-            fan_edge = Edge(ref_pt, p)
-            if fan_edge not in self.edge_to_tris:
-                continue
-            print("base point:", p)
-            for tn in self.edge_to_tris[fan_edge]:
-                print(tn.triangle.points)
-            self.enforce_delaunay(p, self.edge_to_tris[fan_edge])
+        # pairs = zip(hull[1:], hull[2:])
+        # for i, (p, q) in enumerate(pairs):
+        #    if i > 0:
+        #        tris = self.edge_to_tris[Edge(ref_pt, p)]
+        #        print(tris)
+        #        to_flip = [tri for tri in tris if q in tri.triangle.points]
+        #        if not to_flip:
+        #            raise ValueError(
+        #                "bad fan flipping, missing outermost point"
+        #            )
+        #        print("HERE")
+
+        assert len(self.root.children) == len(hull[2:])
+        for triangle, p in zip(self.root.children, hull[2:]):
+            assert not triangle.children
+            self.enforce_delaunay(p, [triangle])
+            print("size of edge dict:", len(self.edge_to_tris))
+            print("total leaves:", len(self.get_leaves()))
 
         # debug print - are edges correct? alg is never getting an opp edge in the map
 
     def enforce_delaunay(self, p: Point, cands: list[TriangleNode]):
+        # print(cands)
         stack = [tn for tn in cands]
         while stack:
             node = stack.pop()
@@ -95,7 +106,8 @@ class HistoryDAG:
                     t, r, [opp_edge.points[0], opp_edge.points[1]]
                 )
                 stack += new_nodes
-                print("STACK", stack)
+                # print("STACK", stack)
+                print("flipped")
             else:
                 print("enforce_delaunay: circle test passed")
 
