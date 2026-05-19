@@ -213,10 +213,17 @@ def two_subdivide_demo():
     plt.tight_layout()
     plt.show()
 
+
 def det_two_subdivide_demo():
     fig, ax = plt.subplots(4, 3)
     for i in range(4):
-        points = [Point(x=100, y=-240), Point(700, 800), Point(-400, 700), Point(x=285, y=223), Point(x=224, y=365)]
+        points = [
+            Point(x=100, y=-240),
+            Point(700, 800),
+            Point(-400, 700),
+            Point(x=285, y=223),
+            Point(x=224, y=365),
+        ]
 
         point_cloud = PointCloud(points)
         dag = HistoryDAG(point_cloud)
@@ -245,6 +252,43 @@ def det_two_subdivide_demo():
     plt.show()
 
 
+def fan_and_insert_demo():
+    fig, ax = plt.subplots(4, 2)
+    for i in range(4):
+        num_points = random.randint(400, 600)
+        points = []
+        for _ in range(num_points):
+            new_x = random.randint(-10000, 10000)
+            new_y = random.randint(-10000, 10000)
+            points.append(Point(new_x, new_y))
+        point_cloud = PointCloud(points)
+        dag = HistoryDAG(point_cloud)
+        to_insert = set(point_cloud.points) - set(point_cloud.convex_hull)
+        for t_node in dag.get_leaves():
+            t = t_node.triangle
+            ax[i, 0].set_aspect("equal")
+            ax[i, 0].plot(
+                [p.x for p in t.points + [t.points[0]]],
+                [p.y for p in t.points + [t.points[0]]],
+            )
+            ax[i, 0].scatter(
+                [p.x for p in point_cloud.points],
+                [p.y for p in point_cloud.points],
+            )
+        while to_insert:
+            new_point = to_insert.pop()
+            dag.insert(new_point)
+        for t_node in dag.get_leaves():
+            t = t_node.triangle
+            ax[i, 1].set_aspect("equal")
+            ax[i, 1].plot(
+                [p.x for p in t.points + [t.points[0]]],
+                [p.y for p in t.points + [t.points[0]]],
+            )
+
+    plt.tight_layout()
+    plt.show()
+
 
 if __name__ == "__main__":
     # triangle_membership_demo()
@@ -252,5 +296,6 @@ if __name__ == "__main__":
     # fan_demo()
     # corrected_fan_demo()
     # DAG_subdivide_demo()
-    two_subdivide_demo()
+    # two_subdivide_demo()
     # det_two_subdivide_demo()
+    fan_and_insert_demo()
