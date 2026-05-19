@@ -102,8 +102,7 @@ def fan_demo():
 def corrected_fan_demo():
     fig, ax = plt.subplots(4, 2)
     for i in range(4):
-        # num_points = random.randint(5, 60)
-        num_points = 10
+        num_points = random.randint(5, 60)
         points = []
         for _ in range(num_points):
             new_x = random.randint(-100, 100)
@@ -117,21 +116,23 @@ def corrected_fan_demo():
             print(leaf.triangle.points)
         for j, nodes in enumerate([dag.root.children, leaves]):
             ax[i, j].set_aspect("equal")
-            ax[i, j].plot(
-                [
-                    p.x
-                    for t in nodes
-                    for p in t.triangle.points + [t.triangle.points[0]]
-                ],
-                [
-                    p.y
-                    for t in nodes
-                    for p in t.triangle.points + [t.triangle.points[0]]
-                ],
-            )
+            for node in nodes:
+                ax[i, j].plot(
+                    [
+                        p.x
+                        for p in node.triangle.points
+                        + [node.triangle.points[0]]
+                    ],
+                    [
+                        p.y
+                        for p in node.triangle.points
+                        + [node.triangle.points[0]]
+                    ],
+                )
             ax[i, j].scatter(
                 [p.x for p in point_cloud.points],
                 [p.y for p in point_cloud.points],
+                s=5,
             )
 
     plt.tight_layout()
