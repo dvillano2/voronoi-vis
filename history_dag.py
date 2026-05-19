@@ -90,7 +90,7 @@ class HistoryDAG:
                 print("enforce_delaunay: early exit on conv hull edge")
                 continue
             t, r = self.edge_to_tris[opp_edge]
-            if not circle_test(t, r, [opp_edge.points[0], opp_edge.points[1]]):
+            if circle_test(t, r, [opp_edge.points[0], opp_edge.points[1]]):
                 new_nodes = self.flip(
                     t, r, [opp_edge.points[0], opp_edge.points[1]]
                 )
@@ -111,8 +111,18 @@ class HistoryDAG:
         r.children = new_nodes
 
         edge = Edge(e[0], e[1])
-        del self.edge_to_tris[edge]
+        old_triangles = self.edge_to_tris[edge]
         self.edge_to_tris[Edge(tx, rx)] = new_nodes
+
+        for node in new_nodes:
+            for p in node.triangle.points:
+                local_edge = node.triangle.get_opp_edge(p)
+                if local_edge != edge and local_edge in self.edge_to_tris:
+                    tris = self.edge_to_tris[local_edge]
+                    to_keep = [tri for tri in tris if tri not in old_triangles]
+                    self.edge_to_tris[local_edge] = [node, to_keep[0]]
+        del self.edge_to_tris[edge]
+
         return new_nodes
 
     def get_leaves(self):
@@ -123,6 +133,7 @@ class HistoryDAG:
             node = stack.pop()
             if node in seen:
                 continue
+            seen.add(node)
             if not node.children:
                 res.append(node)
             else:
