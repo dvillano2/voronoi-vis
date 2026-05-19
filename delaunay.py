@@ -50,7 +50,7 @@ class Edge:
 
     # for debug only
     def __repr__(self):
-        return f'Edge({self.points[0]}, {self.points[1]})'
+        return f"Edge({self.points[0]}, {self.points[1]})"
 
     def __eq__(self, other):
         return isinstance(other, Edge) and self.points == other.points
@@ -114,7 +114,7 @@ class Triangle(PointCloud):
 
     def get_opp_edge(self, p: Point):
         if p not in self.points:
-            raise ValueError("points must be vertices of triangle")
+            raise ValueError("point must be vertex of triangle")
         return Edge(*[z for z in self.points if z != p])
 
 

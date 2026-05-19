@@ -97,6 +97,7 @@ def fan_demo():
     plt.tight_layout()
     plt.show()
 
+
 # side-by-side of fan and corrected fan
 def corrected_fan_demo():
     fig, ax = plt.subplots(4, 2)
@@ -111,6 +112,8 @@ def corrected_fan_demo():
         point_cloud = PointCloud(points)
         dag = HistoryDAG(point_cloud)
         leaves = dag.get_leaves()
+        for leaf in leaves:
+            print(leaf.triangle.points)
         for j, nodes in enumerate([dag.root.children, leaves]):
             ax[i, j].plot(
                 [

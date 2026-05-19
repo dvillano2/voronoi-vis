@@ -63,8 +63,15 @@ class HistoryDAG:
                     self.root.children[-1],
                 ]
             self.root.children.append(new_triangle)
-            # new: enforce delaunay at each step
-            self.enforce_delaunay(q, [new_triangle])
+
+        for p in hull:
+            fan_edge = Edge(ref_pt, p)
+            if fan_edge not in self.edge_to_tris:
+                continue
+            print("base point:", p)
+            for tn in self.edge_to_tris[fan_edge]:
+                print(tn.triangle.points)
+            self.enforce_delaunay(p, self.edge_to_tris[fan_edge])
 
         # debug print - are edges correct? alg is never getting an opp edge in the map
 
@@ -73,10 +80,11 @@ class HistoryDAG:
         while stack:
             node = stack.pop()
             if node.children:
-                raise ValueError(
-                    "assertion: only leaf triangles should be enforced"
-                )
-                # continue
+                # raise ValueError(
+                #     "assertion: only leaf triangles should be enforced"
+                # )
+                print("non leaf triangle")
+                continue
             opp_edge = node.triangle.get_opp_edge(p)
             if opp_edge not in self.edge_to_tris:
                 print("enforce_delaunay: early exit on conv hull edge")
@@ -87,12 +95,13 @@ class HistoryDAG:
                     t, r, [opp_edge.points[0], opp_edge.points[1]]
                 )
                 stack += new_nodes
+                print("STACK", stack)
             else:
                 print("enforce_delaunay: circle test passed")
 
     def flip(self, t: TriangleNode, r: TriangleNode, e: list[Point]):
         # print("flipped an edge!!!!!!!!!!")
-        raise ValueError("FLIPPED! WOO!")
+        # raise ValueError("FLIPPED! WOO!")
         tx = t.triangle.get_opp_point(*e)
         rx = r.triangle.get_opp_point(*e)
         new_node0 = TriangleNode(Triangle(tx, rx, e[0]))
@@ -157,10 +166,6 @@ def circle_test(t: TriangleNode, r: TriangleNode, e: list[Point]):
 
     triangle_coords = [pull_coords(p) for p in t.triangle.points]
     last_point = r.triangle.get_opp_point(*e)
-    print(triangle_coords)
-    print(last_point)
-    print(pull_coords(last_point))
-    print(triangle_coords + [pull_coords(last_point)])
     matrix = np.array(triangle_coords + [pull_coords(last_point)])
 
     return np.linalg.det(matrix) > 0
