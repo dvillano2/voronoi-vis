@@ -213,11 +213,44 @@ def two_subdivide_demo():
     plt.tight_layout()
     plt.show()
 
+def det_two_subdivide_demo():
+    fig, ax = plt.subplots(4, 3)
+    for i in range(4):
+        points = [Point(x=100, y=-240), Point(700, 800), Point(-400, 700), Point(x=285, y=223), Point(x=224, y=365)]
+
+        point_cloud = PointCloud(points)
+        dag = HistoryDAG(point_cloud)
+        used = []
+        for j in range(3):
+            print("\n")
+            for t_node in dag.get_leaves():
+                print(t_node.triangle.points)
+                t = t_node.triangle
+                ax[i, j].plot(
+                    [p.x for p in t.points + [t.points[0]]],
+                    [p.y for p in t.points + [t.points[0]]],
+                )
+            if j == 0:
+                ax[i, j].scatter(
+                    [p.x for p in point_cloud.points],
+                    [p.y for p in point_cloud.points],
+                )
+            for p in point_cloud.points:
+                if p not in point_cloud.convex_hull and p not in used:
+                    dag.insert(p)
+                    used.append(p)
+                    break
+
+    plt.tight_layout()
+    plt.show()
+
+
 
 if __name__ == "__main__":
     # triangle_membership_demo()
     # convex_hull_demo()
     # fan_demo()
-    corrected_fan_demo()
+    # corrected_fan_demo()
     # DAG_subdivide_demo()
-    # two_subdivide_demo()
+    two_subdivide_demo()
+    # det_two_subdivide_demo()

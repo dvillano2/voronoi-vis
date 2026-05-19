@@ -91,9 +91,6 @@ class HistoryDAG:
         while stack:
             node = stack.pop()
             if node.children:
-                # raise ValueError(
-                #     "assertion: only leaf triangles should be enforced"
-                # )
                 print("non leaf triangle")
                 continue
             opp_edge = node.triangle.get_opp_edge(p)
@@ -112,8 +109,6 @@ class HistoryDAG:
                 print("enforce_delaunay: circle test passed")
 
     def flip(self, t: TriangleNode, r: TriangleNode, e: list[Point]):
-        # print("flipped an edge!!!!!!!!!!")
-        # raise ValueError("FLIPPED! WOO!")
         tx = t.triangle.get_opp_point(*e)
         rx = r.triangle.get_opp_point(*e)
         new_node0 = TriangleNode(Triangle(tx, rx, e[0]))
@@ -135,6 +130,8 @@ class HistoryDAG:
                     self.edge_to_tris[local_edge] = [node, to_keep[0]]
         del self.edge_to_tris[edge]
 
+        print(f'flip - input triangles: {t.triangle.points}{r.triangle.points}')
+        print(f'flip - output triangles: {[t.triangle.points for t in new_nodes]}')
         return new_nodes
 
     def get_leaves(self):
@@ -161,13 +158,15 @@ class HistoryDAG:
     def insert(self, p: Point):
         leaf = self.get_leaf(p)
         leaf.subdivide(p)
+
         # update outer edge adjacencies
         for child in leaf.children:
             e = child.triangle.get_opp_edge(p)
             if e in self.edge_to_tris:
                 v = self.edge_to_tris[e]
-                outer_tri = v[1] if v[0] == leaf else v[1]
+                outer_tri = v[1] if v[0] == leaf else v[0]
                 self.edge_to_tris[e] = [outer_tri, child]
+
         # update inner edges adjacencies
         for q in leaf.triangle.points:
             e = Edge(p, q)
@@ -179,9 +178,6 @@ class HistoryDAG:
             self.edge_to_tris[e] = tris
 
         self.enforce_delaunay(p, leaf.children)
-
-        return leaf.children
-
 
 def circle_test(t: TriangleNode, r: TriangleNode, e: list[Point]):
     def pull_coords(p: Point):
