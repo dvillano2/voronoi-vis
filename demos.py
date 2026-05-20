@@ -22,13 +22,13 @@ def triangle_membership_demo():
                 [p.x for p in triangle_points], [p.y for p in triangle_points]
             )
             ax[i, j].scatter(
-                [p.x for p in points if t.inside(p)],
-                [p.y for p in points if t.inside(p)],
+                [p.x for p in points if t.contains(p)],
+                [p.y for p in points if t.contains(p)],
                 c="r",
             )
             ax[i, j].scatter(
-                [p.x for p in points if not t.inside(p)],
-                [p.y for p in points if not t.inside(p)],
+                [p.x for p in points if not t.contains(p)],
+                [p.y for p in points if not t.contains(p)],
                 c="b",
             )
 
@@ -81,12 +81,12 @@ def fan_demo():
                 [
                     p.x
                     for t in dag.root.children
-                    for p in t.triangle.points + [t.triangle.points[0]]
+                    for p in t.points + [t.points[0]]
                 ],
                 [
                     p.y
                     for t in dag.root.children
-                    for p in t.triangle.points + [t.triangle.points[0]]
+                    for p in t.points + [t.points[0]]
                 ],
             )
             ax[i, j].scatter(
@@ -113,13 +113,13 @@ def corrected_fan_demo():
         dag = HistoryDAG(point_cloud)
         leaves = dag.get_leaves()
         for leaf in leaves:
-            print(leaf.triangle.points)
+            print(leaf.points)
         for j, nodes in enumerate([dag.root.children, leaves]):
             ax[i, j].set_aspect("equal")
             for node in nodes:
                 ax[i, j].plot(
-                    [p.x for p in node.triangle.points + [node.triangle.points[0]]],
-                    [p.y for p in node.triangle.points + [node.triangle.points[0]]],
+                    [p.x for p in node.points + [node.points[0]]],
+                    [p.y for p in node.points + [node.points[0]]],
                 )
             ax[i, j].scatter(
                 [p.x for p in point_cloud.points],
@@ -151,10 +151,9 @@ def DAG_subdivide_demo():
                     dag.insert(p)
                     break
             for t_node in dag.root.children[0].children:
-                t = t_node.triangle
                 ax[i, j].plot(
-                    [p.x for p in t.points + [t.points[0]]],
-                    [p.y for p in t.points + [t.points[0]]],
+                    [p.x for p in t_node.points + [t_node.points[0]]],
+                    [p.y for p in t_node.points + [t_node.points[0]]],
                 )
             ax[i, j].scatter(
                 [p.x for p in point_cloud.points],
@@ -186,10 +185,9 @@ def two_subdivide_demo():
         used = []
         for j in range(3):
             for t_node in dag.get_leaves():
-                t = t_node.triangle
                 ax[i, j].plot(
-                    [p.x for p in t.points + [t.points[0]]],
-                    [p.y for p in t.points + [t.points[0]]],
+                    [p.x for p in t_node.points + [t_node.points[0]]],
+                    [p.y for p in t_node.points + [t_node.points[0]]],
                 )
             if j == 0:
                 ax[i, j].scatter(
@@ -223,11 +221,10 @@ def det_two_subdivide_demo():
         for j in range(3):
             print("\n")
             for t_node in dag.get_leaves():
-                print(t_node.triangle.points)
-                t = t_node.triangle
+                print(t_node.points)
                 ax[i, j].plot(
-                    [p.x for p in t.points + [t.points[0]]],
-                    [p.y for p in t.points + [t.points[0]]],
+                    [p.x for p in t_node.points + [t_node.points[0]]],
+                    [p.y for p in t_node.points + [t_node.points[0]]],
                 )
             if j == 0:
                 ax[i, j].scatter(
@@ -257,11 +254,10 @@ def fan_and_insert_demo():
         dag = HistoryDAG(point_cloud)
         to_insert = set(point_cloud.points) - set(point_cloud.convex_hull)
         for t_node in dag.get_leaves():
-            t = t_node.triangle
             ax[i, 0].set_aspect("equal")
             ax[i, 0].plot(
-                [p.x for p in t.points + [t.points[0]]],
-                [p.y for p in t.points + [t.points[0]]],
+                [p.x for p in t_node.points + [t_node.points[0]]],
+                [p.y for p in t_node.points + [t_node.points[0]]],
             )
             ax[i, 0].scatter(
                 [p.x for p in point_cloud.points],
@@ -271,7 +267,7 @@ def fan_and_insert_demo():
             new_point = to_insert.pop()
             dag.insert(new_point)
         for t_node in dag.get_leaves():
-            t = t_node.triangle
+            t = t_node
             ax[i, 1].set_aspect("equal")
             ax[i, 1].plot(
                 [p.x for p in t.points + [t.points[0]]],
@@ -301,11 +297,10 @@ def one_big():
         new_point = to_insert.pop()
         dag.insert(new_point)
     for t_node in dag.get_leaves():
-        t = t_node.triangle
         plt.gca().set_aspect("equal")
         plt.plot(
-            [p.x for p in t.points + [t.points[0]]],
-            [p.y for p in t.points + [t.points[0]]],
+            [p.x for p in t_node.points + [t_node.points[0]]],
+            [p.y for p in t_node.points + [t_node.points[0]]],
         )
 
     plt.show()

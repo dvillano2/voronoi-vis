@@ -66,18 +66,28 @@ class PointCloud:
 
     def sort(self, points):
         def cos_comp(ref_p: Point, p: Point):
+            if p == None:
+                return float("-inf")
             if p == ref_p:
                 return (float("-inf"),) * 2
             distance = sqrt((p.x - ref_p.x) ** 2 + (p.y - ref_p.y) ** 2)
             return (-(p.x - ref_p.x) / distance, distance)
 
-        local_ref = min(points, key=lambda p: (p.y, p.x))
+        local_ref = (
+            min(points, key=lambda p: (p.y, p.x))
+            if None not in points
+            else float("-inf")
+        )
         return sorted(points, key=lambda p: cos_comp(local_ref, p))
 
     def get_convex_hull(self):
+        if None in self.points:
+            return self.points
         stack = []
         for point in self.points + [self.points[0]]:
-            while len(stack) > 1 and not Point.is_left(stack[-2], stack[-1], point):
+            while len(stack) > 1 and not Point.is_left(
+                stack[-2], stack[-1], point
+            ):
                 stack.pop()
             stack.append(point)
         return stack[:-1]
@@ -97,6 +107,8 @@ class Triangle(PointCloud):
         super().__init__([p, q, r])
 
     def contains(self, x: Point):
+        if None in self.points:
+            return True
         last_point_added = self.points + [self.points[0]]
         for point, next_point in zip(last_point_added, last_point_added[1:]):
             if not Point.is_left(point, next_point, x):
