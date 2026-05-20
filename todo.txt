@@ -1,0 +1,17 @@
+backlog:
+- make triangleNode subclass triangle for ergonomics
+- no point cloud. use inf triangle.
+- condsider moving containment next node fundtion to DAG if only used once
+- track which points have been added, (to avoid dupes, hull points)
+- handle colinlear/border points
+- accept floats?
+- think of adapting to adding points out of original point cloud
+
+path to voronoi:
+- get circles/centers associated with each final triangle
+- use that to get the voronoi edges
+- plots that/possibly with the circles?
+
+longer term:
+- physics on points and mesh that moves with it
+- animation of history dag next to evolving mesh
