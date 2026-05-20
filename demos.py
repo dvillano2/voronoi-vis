@@ -290,6 +290,35 @@ def fan_and_insert_demo():
     plt.show()
 
 
+def one_big():
+    num_points = 8000
+    outer_edge = 10000000
+    outer_circle = 3 * outer_edge / 4
+    inner_circle = outer_edge / 4
+    points = []
+    while len(points) < num_points:
+        new_x = random.randint(-outer_edge, outer_edge)
+        new_y = random.randint(-outer_edge, outer_edge)
+        rad_squared = new_x**2 + new_y**2
+        if inner_circle**2 < rad_squared < outer_circle**2:
+            points.append(Point(new_x, new_y))
+    point_cloud = PointCloud(points)
+    dag = HistoryDAG(point_cloud)
+    to_insert = set(point_cloud.points) - set(point_cloud.convex_hull)
+    while to_insert:
+        new_point = to_insert.pop()
+        dag.insert(new_point)
+    for t_node in dag.get_leaves():
+        t = t_node.triangle
+        plt.gca().set_aspect("equal")
+        plt.plot(
+            [p.x for p in t.points + [t.points[0]]],
+            [p.y for p in t.points + [t.points[0]]],
+        )
+
+    plt.show()
+
+
 if __name__ == "__main__":
     # triangle_membership_demo()
     # convex_hull_demo()
@@ -298,4 +327,5 @@ if __name__ == "__main__":
     # DAG_subdivide_demo()
     # two_subdivide_demo()
     # det_two_subdivide_demo()
-    fan_and_insert_demo()
+    # fan_and_insert_demo()
+    one_big()
