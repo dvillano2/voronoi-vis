@@ -45,6 +45,8 @@ class Point:
 class Edge:
     def __init__(self, p: Point, q: Point):
         self.points = tuple(sorted((p, q)))
+        self.p = self.points[0]
+        self.q = self.points[1]
 
     # for debug only
     def __repr__(self):
@@ -105,6 +107,12 @@ class PointCloud:
 class Triangle(PointCloud):
     def __init__(self, p: Point, q: Point, r: Point):
         super().__init__([p, q, r])
+        # note edges will not repect counterclockwise locally
+        self.edges = (
+            [Edge(p, q), Edge(p, r), Edge(q, r)]
+            if None not in self.points
+            else []
+        )
 
     def contains(self, x: Point):
         if None in self.points:
@@ -115,10 +123,10 @@ class Triangle(PointCloud):
                 return False
         return True
 
-    def get_opp_point(self, x: Point, y: Point):
-        if x not in self.points or y not in self.points:
+    def get_opp_point(self, e: Edge):
+        if e.p not in self.points or e.q not in self.points:
             raise ValueError("points must be vertices of triangle")
-        return [z for z in self.points if z not in [x, y]][0]
+        return [z for z in self.points if z not in e.points][0]
 
     def get_opp_edge(self, p: Point):
         if p not in self.points:
