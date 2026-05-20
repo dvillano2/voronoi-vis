@@ -1,3 +1,16 @@
+* todo
+- setup uv?!
+- make tests write points to files (it overwrites the same file each time)
+- make some unit tests. that just check that the leaf triangles are the same given some points
+- minor cleanups:
+  - Edge class
+  - geometry.py file
+    
+- setup linter/fmt in emacs!
+
+- next: voronoi
+
+
 * Convex hull
 Done, see convex_hull.py. uses [[https://en.wikipedia.org/wiki/Graham_scan][Graham Scan]] algorithm.
 
@@ -21,27 +34,3 @@ Done, see convex_hull.py. uses [[https://en.wikipedia.org/wiki/Graham_scan][Grah
   - [[http://www.raymondhill.net/voronoi/rhill-voronoi.html][sick JS implementations]]
   - [[https://www.redblobgames.com/][redblobgames]] recommended by George Danforth 5/8/26 at the lunch table
  
-** algorithm - att 1
-1. (get convex hull)
-2. get base triangulation (fan, or other)
-3. RIC (randomized incremental construction)
-- <unplaced points bucketed in step 2>
-- for each point p:
-  - locate in triangle
-  - triangulate
-  - flipping
-    - (stack starts with the 3 newly created triangles)
-    - while (a,b,c) in stack of triangles on p not empty:
-      - if there's a cross-side triangle and it's circumscribed:
-        - flip edge
-        - push 2 resulting triangles onto stack
-        - rebucket
-
-- rebucketing:
-  - naive idea:
-    - on every flip rebucket into the 2 new triangles. simple line test.
-
-  - other idea: history DAG???
-
-	   
-    
