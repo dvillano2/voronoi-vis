@@ -78,16 +78,8 @@ def fan_demo():
             point_cloud = PointCloud(points)
             dag = HistoryDAG(point_cloud)
             ax[i, j].plot(
-                [
-                    p.x
-                    for t in dag.root.children
-                    for p in t.points + [t.points[0]]
-                ],
-                [
-                    p.y
-                    for t in dag.root.children
-                    for p in t.points + [t.points[0]]
-                ],
+                [p.x for t in dag.root.children for p in t.points + [t.points[0]]],
+                [p.y for t in dag.root.children for p in t.points + [t.points[0]]],
             )
             ax[i, j].scatter(
                 [p.x for p in point_cloud.points],

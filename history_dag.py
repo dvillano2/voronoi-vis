@@ -147,9 +147,7 @@ class HistoryDAG:
         # update inner edges adjacencies
         for q in leaf.points:
             e = Edge(p, q)
-            tris = [
-                tn for tn in leaf.children if p in tn.points and q in tn.points
-            ]
+            tris = [tn for tn in leaf.children if p in tn.points and q in tn.points]
             self.edge_to_tris[e] = tris
 
         self.enforce_delaunay(p, leaf.children)
