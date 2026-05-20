@@ -2,6 +2,6 @@
 run:
 	uv run main.py
 
-.PHONY: format
+.PHONY: fix
 format:
-	uv run ruff check		
+	uv run ruff check && uv run ruff format
