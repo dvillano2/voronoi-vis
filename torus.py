@@ -1,6 +1,6 @@
 import random
 import matplotlib.pyplot as plt
-from delaunay import Point, PointCloud, Triangle
+from delaunay import Point, PointCloud
 from history_dag import HistoryDAG
 
 
@@ -16,9 +16,7 @@ def torus():
         return layers**2 + (x - layers / 2) ** 2
 
     limit_sum = sum(prop_parabola(x) for x in range(layers))
-    limits = [
-        num_points * prop_parabola(x) // limit_sum for x in range(layers)
-    ]
+    limits = [num_points * prop_parabola(x) // limit_sum for x in range(layers)]
 
     while sum([len(bin) for bin in points]) < 7130:
         new_x = random.randint(-outer_edge, outer_edge)
@@ -33,14 +31,9 @@ def torus():
             outer_thresh = inner_circle**2 * (
                 1 - (i + 1) / (layers - 1)
             ) + outer_circle**2 * ((i + 1) / (layers - 1))
-            if (
-                inner_thresh < rad_squared < outer_thresh
-                and len(points[i]) < limits[i]
-            ):
+            if inner_thresh < rad_squared < outer_thresh and len(points[i]) < limits[i]:
                 points[i].append(Point(new_x, new_y))
-        print(
-            f"currently have {sum([len(bin) for bin in points])} points added"
-        )
+        print(f"currently have {sum([len(bin) for bin in points])} points added")
     new_points = []
     for subbin in points:
         new_points.extend(subbin)

@@ -1,8 +1,6 @@
 from __future__ import annotations
-import random
 from math import sqrt
 from dataclasses import dataclass
-import matplotlib.pyplot as plt
 
 """
 assumptions:
@@ -79,9 +77,7 @@ class PointCloud:
     def get_convex_hull(self):
         stack = []
         for point in self.points + [self.points[0]]:
-            while len(stack) > 1 and not Point.is_left(
-                stack[-2], stack[-1], point
-            ):
+            while len(stack) > 1 and not Point.is_left(stack[-2], stack[-1], point):
                 stack.pop()
             stack.append(point)
         return stack[:-1]

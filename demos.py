@@ -118,16 +118,8 @@ def corrected_fan_demo():
             ax[i, j].set_aspect("equal")
             for node in nodes:
                 ax[i, j].plot(
-                    [
-                        p.x
-                        for p in node.triangle.points
-                        + [node.triangle.points[0]]
-                    ],
-                    [
-                        p.y
-                        for p in node.triangle.points
-                        + [node.triangle.points[0]]
-                    ],
+                    [p.x for p in node.triangle.points + [node.triangle.points[0]]],
+                    [p.y for p in node.triangle.points + [node.triangle.points[0]]],
                 )
             ax[i, j].scatter(
                 [p.x for p in point_cloud.points],

@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 import random
 from math import sqrt
-from delaunay import Point
 
 
 def find_ref_point(points):
@@ -29,8 +28,7 @@ def left_turn(point0, point1, point2):
     orthonal_ref = (b - d, c - a)
     new_line = (x - c, y - d)
     dot_product = sum(
-        o_coord * new_coord
-        for o_coord, new_coord in zip(orthonal_ref, new_line)
+        o_coord * new_coord for o_coord, new_coord in zip(orthonal_ref, new_line)
     )
     return dot_product >= 0
 
@@ -43,6 +41,7 @@ def scan(ordered_points):
         stack.append(point)
     # return stack[:-1]
     return stack
+
 
 def get_convex_hull(points):
     ordered = order_points(points)
