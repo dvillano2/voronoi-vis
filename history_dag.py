@@ -1,5 +1,5 @@
 import numpy as np
-from delaunay import Edge, Point, PointCloud, Triangle
+from geometry import Edge, Point, PointCloud, Triangle
 
 # done:
 # - initial fan hull
@@ -99,7 +99,9 @@ class HistoryDAG:
                 continue
             t, r = self.edge_to_tris[opp_edge]
             if circle_test(t, r, [opp_edge.points[0], opp_edge.points[1]]):
-                new_nodes = self.flip(t, r, [opp_edge.points[0], opp_edge.points[1]])
+                new_nodes = self.flip(
+                    t, r, [opp_edge.points[0], opp_edge.points[1]]
+                )
                 stack += new_nodes
                 # print("STACK", stack)
                 print("flipped")
@@ -128,8 +130,12 @@ class HistoryDAG:
                     self.edge_to_tris[local_edge] = [node, to_keep[0]]
         del self.edge_to_tris[edge]
 
-        print(f"flip - input triangles: {t.triangle.points}{r.triangle.points}")
-        print(f"flip - output triangles: {[t.triangle.points for t in new_nodes]}")
+        print(
+            f"flip - input triangles: {t.triangle.points}{r.triangle.points}"
+        )
+        print(
+            f"flip - output triangles: {[t.triangle.points for t in new_nodes]}"
+        )
         return new_nodes
 
     def get_leaves(self):
