@@ -68,7 +68,7 @@ class PointCloud:
 
     def sort(self, points):
         def cos_comp(ref_p: Point, p: Point):
-            if p == None:
+            if p is None:
                 return float("-inf")
             if p == ref_p:
                 return (float("-inf"),) * 2
