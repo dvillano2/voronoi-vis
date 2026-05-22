@@ -1,7 +1,48 @@
+import inspect
+import json
 import random
 import matplotlib.pyplot as plt
 from geometry import Point, PointCloud, Triangle
+from history_dag import TriangleNode
 from history_dag import HistoryDAG
+
+
+# testing todo:
+# - each demo should write the input (points) and output (triangles) to a
+# file of the same name (e.g. logs/demo/triangle_membership_demo.log)
+# - add tests: test/triangle_membership_test with input.txt and expected.txt
+
+
+# input: list of (<input point list>, <output triangle list>) pairs
+# output: writes this at logs/<funcname>.json
+def write_log(funcname: str, data: list(tuple(list(Point), list(Triangle)))):
+    # assumes current dir is project root
+    path = f"logs/{funcname}.json"
+    with open(path, "w") as f:
+        out = []
+        for inputs, outputs in data:
+            outputs = list(map(lambda tn: tn.triangle, outputs))
+            print("data frist pair:")
+            print(inputs[0])
+            print(outputs[0])
+            out.append(
+                [
+                    json.dumps(inputs, default=Point.to_json),
+                    json.dumps(
+                        outputs,
+                        default=Triangle.to_json,
+                    ),
+                ]
+            )
+
+        f.write(json.dumps(out))
+        print(f"wrote logs to {path}")
+
+
+def test_write_log():
+    points = [Point(1, 2), Point(3, 4), Point(5, 6)]
+    triangles = [TriangleNode(Triangle(Point(1, 2), Point(3, 4), Point(5, 6)))]
+    write_log("test_write_log", [(points, triangles)])
 
 
 def triangle_membership_demo():
@@ -22,18 +63,20 @@ def triangle_membership_demo():
                 [p.x for p in triangle_points], [p.y for p in triangle_points]
             )
             ax[i, j].scatter(
-                [p.x for p in points if t.inside(p)],
-                [p.y for p in points if t.inside(p)],
+                [p.x for p in points if t.contains(p)],
+                [p.y for p in points if t.contains(p)],
                 c="r",
             )
             ax[i, j].scatter(
-                [p.x for p in points if not t.inside(p)],
-                [p.y for p in points if not t.inside(p)],
+                [p.x for p in points if not t.contains(p)],
+                [p.y for p in points if not t.contains(p)],
                 c="b",
             )
 
     plt.tight_layout()
     plt.show()
+
+    write_log(inspect.currentframe().f_code.co_name, points)
 
 
 def convex_hull_demo():
@@ -100,6 +143,7 @@ def fan_demo():
 
 # side-by-side of fan and corrected fan
 def corrected_fan_demo():
+    to_log = []
     fig, ax = plt.subplots(4, 2)
     for i in range(4):
         num_points = random.randint(5, 60)
@@ -112,22 +156,14 @@ def corrected_fan_demo():
         point_cloud = PointCloud(points)
         dag = HistoryDAG(point_cloud)
         leaves = dag.get_leaves()
-        for leaf in leaves:
-            print(leaf.triangle.points)
+        to_log.append((points, leaves))
+        print(f"to log first pair: {to_log[0][0]},{to_log[0][1]}")
         for j, nodes in enumerate([dag.root.children, leaves]):
             ax[i, j].set_aspect("equal")
             for node in nodes:
                 ax[i, j].plot(
-                    [
-                        p.x
-                        for p in node.triangle.points
-                        + [node.triangle.points[0]]
-                    ],
-                    [
-                        p.y
-                        for p in node.triangle.points
-                        + [node.triangle.points[0]]
-                    ],
+                    [p.x for p in node.triangle.points + [node.triangle.points[0]]],
+                    [p.y for p in node.triangle.points + [node.triangle.points[0]]],
                 )
             ax[i, j].scatter(
                 [p.x for p in point_cloud.points],
@@ -137,6 +173,7 @@ def corrected_fan_demo():
 
     plt.tight_layout()
     plt.show()
+    write_log(inspect.currentframe().f_code.co_name, to_log)
 
 
 def DAG_subdivide_demo():
@@ -328,4 +365,5 @@ if __name__ == "__main__":
     # two_subdivide_demo()
     # det_two_subdivide_demo()
     # fan_and_insert_demo()
-    one_big()
+    # one_big()
+    test_write_log()

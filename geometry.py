@@ -39,6 +39,14 @@ class Point:
             return False
         return self.y < other.y
 
+    @staticmethod
+    def to_json(p: Point):
+        return {"x": p.x, "y": p.y}
+
+    @staticmethod
+    def from_json(dct):
+        return Point(dct["x"], dct["y"])
+
 
 # note: i define eq and hash below, but @dataclass(frozen=True) is same.
 # and you can define a __post_init__
@@ -112,6 +120,27 @@ class Triangle(PointCloud):
         if p not in self.points:
             raise ValueError("point must be vertex of triangle")
         return Edge(*[z for z in self.points if z != p])
+
+    @staticmethod
+    def to_json(t: Triangle):
+        json_pts = list(map(lambda p: Point.to_json(p), t.points))
+        # return {"p": t.points[0], "q": t.points[1], "r": t.points[2]}
+        return {"p": json_pts[0], "q": json_pts[1], "r": json_pts[2]}
+
+    @staticmethod
+    def from_json(dct):
+        print(dct)
+        # print(dct)
+        # points = list(map(lambda p_dct: Point.from_json(p_dct), dct.values()))
+        # return Triangle(points[0], points[1], points[2])
+        return Triangle(
+            Point.from_json(dct["p"]),
+            Point.from_json(dct["q"]),
+            Point.from_json(dct["r"]),
+        )
+
+    def __repr__(self):
+        return f"Max's sweet Triangle({','.join(str(x) for x in self.points)})"
 
 
 if __name__ == "__main__":
