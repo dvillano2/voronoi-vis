@@ -63,11 +63,10 @@ class Point:
 # and you can define a __post_init__
 class Edge:
     def __init__(self, p: Point, q: Point):
-        if not p.is_finite or not q.is_finite:
-            raise ValueError("Edge must be between two finite points")
         self.points = tuple(sorted((p, q)))
         self.p = self.points[0]
         self.q = self.points[1]
+        self.is_finite = all(e.is_finite for e in self.points)
 
     # for debug only
     def __repr__(self):
@@ -103,7 +102,6 @@ class PointCloud:
         def cos_comp(ref_p: Point, p: Point):
             if p == ref_p:
                 return (float("-inf"),) * 2
-            p = p.dummy if p.z == 1 else p
             distance = sqrt((p.x - ref_p.x) ** 2 + (p.y - ref_p.y) ** 2)
             return (-(p.x - ref_p.x) / distance, distance)
 
@@ -137,14 +135,22 @@ class Triangle:
         points = [p, q, r]
         finite_points = [x for x in points if x.is_finite]
         infinite_points = [x for x in points if not x.is_finite]
-        sorting_reps: dict[Point, Point] = {x: x for x in finite_points}
+        sorting_reps: dict[Point, Point] = {x: x for x in points}
         for a in infinite_points:
             if finite_points:
                 b = max(finite_points, key=lambda z: Point.dot(z, a))
-            sorting_reps[a] = Point(a.x + b.x, a.y + b.y)
+                sorting_reps[a] = Point(a.x + b.x, a.y + b.y)
         self.points = self._sort(sorting_reps)
-        print(self.points[0])
-        self.edges = [Edge(x, y) for x, y in looped_pairs(finite_points)]
+        self.edges = [Edge(x, y) for x, y in looped_pairs(self.points)]
+        self.is_finite = all(p.is_finite for p in self.points)
+
+    def plot(self, ax):
+        if not self.is_finite:
+            return
+        ax.plot(
+            [p.x for e in self.edges for p in e.points],
+            [p.y for e in self.edges for p in e.points],
+        )
 
     def _sort(self, rep_pairs):
         def cos_comp(ref_p: Point, p: Point):
@@ -183,6 +189,9 @@ class Triangle:
                 return e
         print("get opp edge not found: no good")
         return None
+
+    def triple(self):
+        return Triangle(*[Point(3 * p.x, 3 * p.y) for p in self.points])
 
 
 if __name__ == "__main__":

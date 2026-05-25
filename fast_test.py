@@ -9,7 +9,7 @@ def random_test_1():
     q = Point(0, 1, False)
     r = Point(1, -1, False)
     t = Triangle(p, q, r)
-    assert len(t.edges) == 0
+    assert len(t.edges) == 3
     print(f"ordered points are {t.points}")
     for _ in range(100000):
         x = random.randint(-10000, 100000)
@@ -26,7 +26,7 @@ def random_test_2():
     q = Point(0, 1, False)
     r = Point(-1, -1, False)
     t = Triangle(p, q, r)
-    assert len(t.edges) == 0
+    assert len(t.edges) == 3
     print(f"ordered points are {t.points}")
     for _ in range(100000):
         x = random.randint(-10000, 100000)
@@ -43,7 +43,7 @@ def random_test_3():
     q = Point(-1, -1, False)
     r = Point(1, -1, False)
     t = Triangle(p, q, r)
-    assert len(t.edges) == 0
+    assert len(t.edges) == 3
     print(f"ordered points are {t.points}")
     for _ in range(100000):
         x = random.randint(-10000, 100000)
@@ -65,7 +65,7 @@ def random_test_4():
     p, q = sorted([p, q])
     r = Point(0, 1, False)
     t = Triangle(p, q, r)
-    assert len(t.edges) == 1
+    assert len(t.edges) == 3
     print(f"ordered points are {t.points}")
     for _ in range(100000):
         x = random.randint(-10000, 100000)
@@ -87,7 +87,7 @@ def random_test_5():
     p, q = sorted([p, q], key=lambda r: -r.x + r.y)
     r = Point(-1, -1, False)
     t = Triangle(p, q, r)
-    assert len(t.edges) == 1
+    assert len(t.edges) == 3
     print(f"ordered points are {t.points}")
     for _ in range(100000):
         x = random.randint(-10000, 100000)
@@ -111,7 +111,7 @@ def random_test_6():
     p, q = sorted([p, q], key=lambda r: -r.x + -r.y)
     r = Point(1, -1, False)
     t = Triangle(p, q, r)
-    assert len(t.edges) == 1
+    assert len(t.edges) == 3
     print(f"ordered points are {t.points}")
     for _ in range(100000):
         x = random.randint(-10000, 100000)

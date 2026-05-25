@@ -19,7 +19,9 @@ def triangle_membership_demo():
 
             t = Triangle(*triangle_points)
             ax[i, j].plot(
-                [p.x for p in triangle_points], [p.y for p in triangle_points]
+                [p.x for e in t.edges for p in e.points],
+                [p.y for e in t.edges for p in e.points],
+                c="k",
             )
             ax[i, j].scatter(
                 [p.x for p in points if t.contains(p)],
@@ -134,33 +136,28 @@ def corrected_fan_demo():
 
 
 def DAG_subdivide_demo():
-    fig, ax = plt.subplots(4, 4)
+    fig, ax = plt.subplots(4, 4, sharex=True, sharey=True)
     for i in range(4):
+        dag = HistoryDAG()
+        points = []
+        for _ in range(2):
+            new_x = random.randint(-100, 100)
+            new_y = random.randint(-100, 100)
+            p = Point(new_x, new_y)
+            points.append(p)
+            dag.insert(p)
         for j in range(4):
-            print(f"Working on plot {i}, {j}")
-            num_points = 4
-            ch_triangle = False
-            while not ch_triangle:
-                points = []
-                for _ in range(num_points):
-                    new_x = random.randint(-100, 100)
-                    new_y = random.randint(-100, 100)
-                    points.append(Point(new_x, new_y))
-                point_cloud = PointCloud(points)
-                ch_triangle = len(point_cloud.convex_hull) == 3
-            dag = HistoryDAG(point_cloud)
-            for p in point_cloud.points:
-                if p not in point_cloud.convex_hull:
-                    dag.insert(p)
-                    break
-            for t_node in dag.root.children[0].children:
-                ax[i, j].plot(
-                    [p.x for e in t_node.edges for p in e.points],
-                    [p.y for e in t_node.edges for p in e.points],
-                )
+            # print(f"Working on plot {i}, {j}")
+            new_x = random.randint(-100, 100)
+            new_y = random.randint(-100, 100)
+            p = Point(new_x, new_y)
+            points.append(p)
+            dag.insert(p)
+            for t_node in dag.get_leaves():
+                t_node.plot(ax[i, j])
             ax[i, j].scatter(
-                [p.x for p in point_cloud.points],
-                [p.y for p in point_cloud.points],
+                [p.x for p in points],
+                [p.y for p in points],
             )
     plt.tight_layout()
     plt.show()

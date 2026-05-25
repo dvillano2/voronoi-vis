@@ -1,5 +1,5 @@
 import numpy as np
-from geometry import Edge, Point, PointCloud, Triangle
+from geometry import Edge, Point, Triangle, looped_pairs
 
 # done:
 # - initial fan hull
@@ -34,36 +34,19 @@ class TriangleNode(Triangle):
             raise ValueError(
                 "To subdivide triangle with x, x must be inside the triangle"
             )
-        looped_points = self.points + [self.points[0]]
-        for y, z in zip(looped_points, looped_points[1:]):
+        for y, z in looped_pairs(self.points):
             self.children.append(TriangleNode(x, y, z))
 
 
 class HistoryDAG:
-    def __init__(self, cloud: PointCloud):
-        self.cloud = cloud
+    def __init__(self):
         self.root = TriangleNode(
-            Point(0, 1, 1), Point(1, -1, 1), Point(-1, 1, 1)
+            Point(0, 1, False), Point(-1, -1, False), Point(1, -1, False)
         )
         print(f"root edges are {self.root.edges}")
-        self.edge_to_tris: dict[Edge, list[TriangleNode]] = {}
-        self.edge_to_tris[Edge(self.root.points[0], self.root.points[1])] = [
-            self.root,
-            self.root,
-        ]
-        self.edge_to_tris[Edge(self.root.points[1], self.root.points[2])] = [
-            self.root,
-            self.root,
-        ]
-        self.edge_to_tris[Edge(self.root.points[2], self.root.points[0])] = [
-            self.root,
-            self.root,
-        ]
-        self.raw_to_point = {p.get_raw_point(): p for p in self.cloud.points}
-        for p in self.root.points:
-            self.raw_to_point[p.get_raw_point()] = p
-        for point in self.cloud.points:
-            self.insert(point)
+        self.edge_to_tris: dict[Edge, list[TriangleNode]] = {
+            e: [self.root, self.root] for e in self.root.edges
+        }
 
         # self.root.children = self._get_root_triangles()
         # self._setup_root_triangles()
@@ -94,27 +77,26 @@ class HistoryDAG:
         while stack:
             node = stack.pop()
             if node.children:
-                print("non leaf triangle")
+                # print("non leaf triangle")
                 continue
             opp_edge = node.get_opp_edge(p)
             if opp_edge not in self.edge_to_tris:
-                print("enforce_delaunay: early exit on conv hull edge")
+                # print("enforce_delaunay: early exit on conv hull edge")
                 continue
             t, r = self.edge_to_tris[opp_edge]
             if circle_test(t, r, opp_edge):
                 new_nodes = self.flip(t, r, opp_edge)
                 stack += new_nodes
                 # print("STACK", stack)
-                print("flipped")
+                # print("flipped")
             else:
-                print("enforce_delaunay: circle test passed")
+                pass
+                # print("enforce_delaunay: circle test passed")
 
     def flip(self, t: TriangleNode, r: TriangleNode, e: Edge):
         tx = t.get_opp_point(e)
         rx = r.get_opp_point(e)
-        new_nodes = [
-            TriangleNode(tx, rx, self.raw_to_point[x]) for x in e.points
-        ]
+        new_nodes = [TriangleNode(tx, rx, x) for x in e.points]
         t.children = new_nodes
         r.children = new_nodes
 
@@ -156,9 +138,8 @@ class HistoryDAG:
         return node
 
     def insert(self, p: Point):
-        print(f"inserting point {p.x}, {p.y}, {p.z}")
+        print(f"inserting point {p.x}, {p.y}")
         leaf = self.get_leaf(p)
-        print(f"leaf is {leaf.points}")
         leaf.subdivide(p)
 
         # update outer edge adjacencies
@@ -178,14 +159,42 @@ class HistoryDAG:
             self.edge_to_tris[e] = tris
 
         self.enforce_delaunay(p, leaf.children)
+        print(f"THERE ARE {len(self.edge_to_tris)} EDGES IN THE DICT")
 
 
 def circle_test(t: TriangleNode, r: TriangleNode, e: Edge):
+    if e not in t.edges + r.edges:
+        raise ValueError("edges must belong to both triangles")
+    present_point = t.get_opp_point(e)
+    last_point = r.get_opp_point(e)
+
+    if not last_point.is_finite or not present_point.is_finite:
+        return False
+
+    if any(not p.is_finite for p in e.points):
+        if not t.is_finite or not r.is_finite:
+            return True
+        # refactor
+        tripled_t = t.triple()
+        tripled_r = r.triple()
+        a, b = present_point.x, present_point.y
+        z, w = last_point.x, last_point.y
+        interpolated_point_1 = Point(a + z, 2 * b + 2 * w)
+        interpolated_point_2 = Point(2 * a + 2 * z, b + w)
+        condition_1 = tripled_t.contains(
+            interpolated_point_1
+        ) or tripled_r.contains(interpolated_point_2)
+        condition_2 = tripled_t.contains(
+            interpolated_point_2
+        ) or tripled_r.contains(interpolated_point_2)
+        if condition_1 or condition_2:
+            return False
+        return True
+
     def pull_coords(p: Point):
         return [p.x, p.y, p.x**2 + p.y**2, 1]
 
     triangle_coords = [pull_coords(p) for p in t.points]
-    last_point = r.get_opp_point(e)
     matrix = np.array(triangle_coords + [pull_coords(last_point)])
 
     return np.linalg.det(matrix) > 0
