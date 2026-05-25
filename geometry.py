@@ -8,6 +8,11 @@ assumptions:
 """
 
 
+def looped_pairs(points: list[Point]):
+    loop = points + [points[0]]
+    return zip(loop, loop[1:])
+
+
 @dataclass(frozen=True)
 class Point:
     x: int
@@ -125,40 +130,53 @@ class PointCloud:
         ]
 
 
-class Triangle(PointCloud):
+class Triangle:
     def __init__(self, p: Point, q: Point, r: Point):
-        super().__init__([p, q, r])
-        # note edges will not repect counterclockwise locally
-        self.edges = [Edge(p, q), Edge(p, r), Edge(q, r)]
+        points = [p, q, r]
+        finite_points = [x for x in points if x.is_finite]
+        infinite_points = [x for x in points if not x.is_finite]
+        sorting_reps: dict[Point, Point] = {x: x for x in finite_points}
+        for x in infinite_points:
+            if finite_points:
+                y = max(finite_points, key=lambda z: Point.dot(z, x))
+            sorting_reps[x] = Point(x.x + y.x, x.x + y.x)
+        self.points = self._sort(sorting_reps)
+        self.edges = [Edge(x, y) for x, y in looped_pairs(finite_points)]
+
+    def _sort(self, rep_pairs):
+        def cos_comp(ref_p: Point, p: Point):
+            if p == ref_p:
+                return (float("-inf"),) * 2
+            distance = sqrt((p.x - ref_p.x) ** 2 + (p.y - ref_p.y) ** 2)
+            return (-(p.x - ref_p.x) / distance, distance)
+
+        local_ref = min(rep_pairs.keys(), key=lambda p: (p.y, p.x))
+        return sorted(
+            rep_pairs.keys(), key=lambda p: cos_comp(local_ref, rep_pairs[p])
+        )
 
     def contains(self, x: Point):
-        last_point_added = self.points + [self.points[0]]
-        for point, next_point in zip(last_point_added, last_point_added[1:]):
-            if point.z == 1 and next_point.z == 1:
+        for point, next_point in looped_pairs(self.points):
+            if not point.is_finite and not next_point.is_finite:
                 continue
             if not Point.is_left(point, next_point, x):
                 return False
         return True
 
     def get_opp_point(self, e: Edge):
-        raw_triangle_points = [p.get_raw_point() for p in self.points]
-        if e.p not in raw_triangle_points or e.q not in raw_triangle_points:
-            raise ValueError("points must be vertices of triangle")
+        if e not in self.edges:
+            raise ValueError("edge must be finite side of triangle")
         for p in self.points:
-            if p.get_raw_point() not in e.points:
+            if p not in e.points:
                 return p
         print("get opp point not found: no good")
         return None
 
     def get_opp_edge(self, p: Point):
-        print("opp edge called")
-        print(f"triangle points are {self.points}")
-        print(f"point isw {p}")
         if p not in self.points:
             raise ValueError("point must be vertex of triangle")
-        raw_p = p.get_raw_point()
         for e in self.edges:
-            if raw_p not in e.points:
+            if p not in e.points:
                 return e
         print("get opp edge not found: no good")
         return None
