@@ -9,8 +9,6 @@ assumptions:
 
 
 def looped_pairs(points: list[Point]):
-    if len(points) < 3:
-        return zip(points, points[1:])
     loop = points + [points[0]]
     return zip(loop, loop[1:])
 
@@ -38,7 +36,7 @@ class Point:
         if not p.is_finite and not q.is_finite:
             return Point(0, 0)
         if not p.is_finite:
-            return Point(p.y, -p.x)
+            return Point(-p.y, p.x)
         if not q.is_finite:
             return Point(-q.y, q.x)
         direction = Point.sub(q, p)
@@ -138,12 +136,11 @@ class Triangle:
         finite_points = [x for x in points if x.is_finite]
         infinite_points = [x for x in points if not x.is_finite]
         sorting_reps: dict[Point, Point] = {x: x for x in finite_points}
-        for a in infinite_points:
+        for x in infinite_points:
             if finite_points:
-                b = max(finite_points, key=lambda z: Point.dot(z, a))
-            sorting_reps[a] = Point(a.x + b.x, a.y + b.y)
+                y = max(finite_points, key=lambda z: Point.dot(z, x))
+            sorting_reps[x] = Point(x.x + y.x, x.x + y.x)
         self.points = self._sort(sorting_reps)
-        print(self.points[0])
         self.edges = [Edge(x, y) for x, y in looped_pairs(finite_points)]
 
     def _sort(self, rep_pairs):
@@ -153,7 +150,7 @@ class Triangle:
             distance = sqrt((p.x - ref_p.x) ** 2 + (p.y - ref_p.y) ** 2)
             return (-(p.x - ref_p.x) / distance, distance)
 
-        local_ref = min(rep_pairs.values(), key=lambda p: (p.y, p.x))
+        local_ref = min(rep_pairs.keys(), key=lambda p: (p.y, p.x))
         return sorted(
             rep_pairs.keys(), key=lambda p: cos_comp(local_ref, rep_pairs[p])
         )
