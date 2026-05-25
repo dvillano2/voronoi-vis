@@ -9,29 +9,10 @@ assumptions:
 
 
 @dataclass(frozen=True)
-class RawPoint:
-    x: int
-    y: int
-    z: int
-
-    def __lt__(self, other: Point):
-        if self.x < other.x:
-            return True
-        if self.x > other.x:
-            return False
-        return self.y < other.y
-
-
-@dataclass(frozen=True)
 class Point:
     x: int
     y: int
-    z: int = 0
-    dummy: Point = field(init=False)
-
-    def __post_init__(self):
-        dummy = Point(self.x, self.y) if self.z == 1 else self
-        object.__setattr__(self, "dummy", dummy)
+    is_finite: bool = True
 
     @staticmethod
     def dot(p: Point, q: Point):
@@ -39,19 +20,19 @@ class Point:
 
     @staticmethod
     def sub(p: Point, q: Point):
-        if p.z == 1:
+        if not p.is_finite:
             return Point(p.x, p.y)
-        if q.z == 1:
+        if not q.is_finite:
             return Point(-q.x, -q.y)
         return Point(p.x - q.x, p.y - q.y)
 
     @staticmethod
     def orthogonal(p: Point, q: Point):
-        if p.z == 1 and q.z == 1:
-            return Point(0, 0, 1)
-        if p.z == 1:
+        if not p.is_finite and not q.is_finite:
+            return Point(0, 0)
+        if not p.is_finite:
             return Point(-p.y, p.x)
-        if q.z == 1:
+        if not q.is_finite:
             return Point(-q.y, q.x)
         direction = Point.sub(q, p)
         return Point(-direction.y, direction.x)
@@ -59,17 +40,9 @@ class Point:
     @staticmethod
     def is_left(p: Point, q: Point, x: Point):
         base_orthogonal = Point.orthogonal(p, q)
-        finite_base = q if q.z == 0 else p
+        finite_base = q if q.is_finite else p
         new_direction = Point.sub(x, finite_base)
         return Point.dot(base_orthogonal, new_direction) > 0
-
-    def establish_dummy(self, p: Point):
-        if self.z == 1:
-            dummy = Point(p.x + self.x, p.y + self.y, 0)
-            object.__setattr__(self, "dummy", dummy)
-
-    def get_raw_point(self):
-        return RawPoint(self.x, self.y, self.z)
 
     def __lt__(self, other: Point):
         if self.x < other.x:
@@ -83,9 +56,9 @@ class Point:
 # and you can define a __post_init__
 class Edge:
     def __init__(self, p: Point, q: Point):
-        x: RawPoint = p.get_raw_point()
-        y: RawPoint = q.get_raw_point()
-        self.points = tuple(sorted((x, y)))
+        if not p.is_finite or not q.is_finite:
+            raise ValueError("Edge must be between two finite points")
+        self.points = tuple(sorted((p, q)))
         self.p = self.points[0]
         self.q = self.points[1]
 
@@ -105,8 +78,8 @@ class Edge:
 
 class PointCloud:
     def __init__(self, points: list[Point]):
-        self.infinite_points = [p for p in points if p.z == 1]
-        self.finite_points = [p for p in points if p.z == 0]
+        self.infinite_points = [p for p in points if not p.is_finite]
+        self.finite_points = [p for p in points if p.is_finite]
         self.create_dummies()
         # points sorted by cos relative to bottommost point
         self.points = self.sort(points)
