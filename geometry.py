@@ -1,6 +1,6 @@
 from __future__ import annotations
 from math import sqrt
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 """
 assumptions:
@@ -9,9 +9,29 @@ assumptions:
 
 
 @dataclass(frozen=True)
+class RawPoint:
+    x: int
+    y: int
+    z: int
+
+    def __lt__(self, other: Point):
+        if self.x < other.x:
+            return True
+        if self.x > other.x:
+            return False
+        return self.y < other.y
+
+
+@dataclass(frozen=True)
 class Point:
     x: int
     y: int
+    z: int = 0
+    dummy: Point = field(init=False)
+
+    def __post_init__(self):
+        dummy = Point(self.x, self.y) if self.z == 1 else self
+        object.__setattr__(self, "dummy", dummy)
 
     @staticmethod
     def dot(p: Point, q: Point):
@@ -19,18 +39,37 @@ class Point:
 
     @staticmethod
     def sub(p: Point, q: Point):
+        if p.z == 1:
+            return Point(p.x, p.y)
+        if q.z == 1:
+            return Point(-q.x, -q.y)
         return Point(p.x - q.x, p.y - q.y)
 
     @staticmethod
     def orthogonal(p: Point, q: Point):
+        if p.z == 1 and q.z == 1:
+            return Point(0, 0, 1)
+        if p.z == 1:
+            return Point(-p.y, p.x)
+        if q.z == 1:
+            return Point(-q.y, q.x)
         direction = Point.sub(q, p)
         return Point(-direction.y, direction.x)
 
     @staticmethod
     def is_left(p: Point, q: Point, x: Point):
         base_orthogonal = Point.orthogonal(p, q)
-        new_direction = Point.sub(x, q)
+        finite_base = q if q.z == 0 else p
+        new_direction = Point.sub(x, finite_base)
         return Point.dot(base_orthogonal, new_direction) > 0
+
+    def establish_dummy(self, p: Point):
+        if self.z == 1:
+            dummy = Point(p.x + self.x, p.y + self.y, 0)
+            object.__setattr__(self, "dummy", dummy)
+
+    def get_raw_point(self):
+        return RawPoint(self.x, self.y, self.z)
 
     def __lt__(self, other: Point):
         if self.x < other.x:
@@ -44,7 +83,9 @@ class Point:
 # and you can define a __post_init__
 class Edge:
     def __init__(self, p: Point, q: Point):
-        self.points = tuple(sorted((p, q)))
+        x: RawPoint = p.get_raw_point()
+        y: RawPoint = q.get_raw_point()
+        self.points = tuple(sorted((x, y)))
         self.p = self.points[0]
         self.q = self.points[1]
 
@@ -56,38 +97,47 @@ class Edge:
         return isinstance(other, Edge) and self.points == other.points
 
     def __hash__(self):
+        # print(
+        #     f"hashing the following edge {self.p.x, self.p.y, self.p.z}, {self.q.x, self.q.y, self.q.z}"
+        # )
         return hash(self.points)
 
 
 class PointCloud:
     def __init__(self, points: list[Point]):
+        self.infinite_points = [p for p in points if p.z == 1]
+        self.finite_points = [p for p in points if p.z == 0]
+        self.create_dummies()
         # points sorted by cos relative to bottommost point
         self.points = self.sort(points)
         # points on convex hull, cyclic from bottommost point.
         self.convex_hull = self.get_convex_hull()
 
+    def create_dummies(self):
+        for p in self.infinite_points:
+            if self.finite_points:
+                q = max(self.finite_points, key=lambda x: Point.dot(x, p))
+                p.establish_dummy(q)
+
     def sort(self, points):
         def cos_comp(ref_p: Point, p: Point):
-            if p is None:
-                return float("-inf")
             if p == ref_p:
                 return (float("-inf"),) * 2
+            p = p.dummy if p.z == 1 else p
             distance = sqrt((p.x - ref_p.x) ** 2 + (p.y - ref_p.y) ** 2)
             return (-(p.x - ref_p.x) / distance, distance)
 
-        local_ref = (
-            min(points, key=lambda p: (p.y, p.x))
-            if None not in points
-            else float("-inf")
-        )
+        local_ref = min(points, key=lambda p: (p.y, p.x))
         return sorted(points, key=lambda p: cos_comp(local_ref, p))
 
     def get_convex_hull(self):
-        if None in self.points:
-            return self.points
         stack = []
         for point in self.points + [self.points[0]]:
-            while len(stack) > 1 and not Point.is_left(stack[-2], stack[-1], point):
+            if point.z == 1:
+                continue
+            while len(stack) > 1 and not Point.is_left(
+                stack[-2], stack[-1], point
+            ):
                 stack.pop()
             stack.append(point)
         return stack[:-1]
@@ -106,28 +156,39 @@ class Triangle(PointCloud):
     def __init__(self, p: Point, q: Point, r: Point):
         super().__init__([p, q, r])
         # note edges will not repect counterclockwise locally
-        self.edges = (
-            [Edge(p, q), Edge(p, r), Edge(q, r)] if None not in self.points else []
-        )
+        self.edges = [Edge(p, q), Edge(p, r), Edge(q, r)]
 
     def contains(self, x: Point):
-        if None in self.points:
-            return True
         last_point_added = self.points + [self.points[0]]
         for point, next_point in zip(last_point_added, last_point_added[1:]):
+            if point.z == 1 and next_point.z == 1:
+                continue
             if not Point.is_left(point, next_point, x):
                 return False
         return True
 
     def get_opp_point(self, e: Edge):
-        if e.p not in self.points or e.q not in self.points:
+        raw_triangle_points = [p.get_raw_point() for p in self.points]
+        if e.p not in raw_triangle_points or e.q not in raw_triangle_points:
             raise ValueError("points must be vertices of triangle")
-        return [z for z in self.points if z not in e.points][0]
+        for p in self.points:
+            if p.get_raw_point() not in e.points:
+                return p
+        print("get opp point not found: no good")
+        return None
 
     def get_opp_edge(self, p: Point):
+        print("opp edge called")
+        print(f"triangle points are {self.points}")
+        print(f"point isw {p}")
         if p not in self.points:
             raise ValueError("point must be vertex of triangle")
-        return Edge(*[z for z in self.points if z != p])
+        raw_p = p.get_raw_point()
+        for e in self.edges:
+            if raw_p not in e.points:
+                return e
+        print("get opp edge not found: no good")
+        return None
 
 
 if __name__ == "__main__":

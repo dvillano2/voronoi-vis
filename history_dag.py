@@ -21,7 +21,7 @@ from geometry import Edge, Point, PointCloud, Triangle
 class TriangleNode(Triangle):
     def __init__(self, p: Point, q: Point, r: Point):
         super().__init__(p, q, r)
-        self.children = []
+        self.children: list[TriangleNode] = []
 
     def get_containing_child(self, x: Point):
         for child in self.children:
@@ -42,31 +42,52 @@ class TriangleNode(Triangle):
 class HistoryDAG:
     def __init__(self, cloud: PointCloud):
         self.cloud = cloud
-        self.root = TriangleNode(None, None, None)
-        self.edge_to_tris = {}
+        self.root = TriangleNode(
+            Point(0, 1, 1), Point(1, -1, 1), Point(-1, 1, 1)
+        )
+        print(f"root edges are {self.root.edges}")
+        self.edge_to_tris: dict[Edge, list[TriangleNode]] = {}
+        self.edge_to_tris[Edge(self.root.points[0], self.root.points[1])] = [
+            self.root,
+            self.root,
+        ]
+        self.edge_to_tris[Edge(self.root.points[1], self.root.points[2])] = [
+            self.root,
+            self.root,
+        ]
+        self.edge_to_tris[Edge(self.root.points[2], self.root.points[0])] = [
+            self.root,
+            self.root,
+        ]
+        self.raw_to_point = {p.get_raw_point(): p for p in self.cloud.points}
+        for p in self.root.points:
+            self.raw_to_point[p.get_raw_point()] = p
+        for point in self.cloud.points:
+            self.insert(point)
+
         # self.root.children = self._get_root_triangles()
-        self._setup_root_triangles()
+        # self._setup_root_triangles()
 
-    def _setup_root_triangles(self):
-        hull = self.cloud.convex_hull
-        ref_pt = hull[0]
-        pairs = zip(hull[1:], hull[2:])
+    # def _setup_root_triangles(self):
+    #    hull = self.cloud.convex_hull
+    #    ref_pt = hull[0]
+    #    pairs = zip(hull[1:], hull[2:])
 
-        for i, (p, q) in enumerate(pairs):
-            new_triangle = TriangleNode(ref_pt, p, q)
-            if i > 0:
-                self.edge_to_tris[Edge(ref_pt, p)] = [
-                    new_triangle,
-                    self.root.children[-1],
-                ]
-            self.root.children.append(new_triangle)
+    #    for i, (p, q) in enumerate(pairs):
+    #        new_triangle = TriangleNode(ref_pt, p, q)
+    #        if i > 0:
+    #            self.edge_to_tris[Edge(ref_pt, p)] = [
+    #                new_triangle,
+    #                self.root.children[-1],
+    #            ]
+    #        self.root.children.append(new_triangle)
 
-        assert len(self.root.children) == len(hull[2:])
-        for triangle, p in zip(self.root.children, hull[2:]):
-            assert not triangle.children
-            self.enforce_delaunay(p, [triangle])
-            print("size of edge dict:", len(self.edge_to_tris))
-            print("total leaves:", len(self.get_leaves()))
+    #    assert len(self.root.children) == len(hull[2:])
+    #    for triangle, p in zip(self.root.children, hull[2:]):
+    #        assert not triangle.children
+    #        self.enforce_delaunay(p, [triangle])
+    #        print("size of edge dict:", len(self.edge_to_tris))
+    #        print("total leaves:", len(self.get_leaves()))
 
     def enforce_delaunay(self, p: Point, cands: list[TriangleNode]):
         stack = list(cands)
@@ -91,7 +112,9 @@ class HistoryDAG:
     def flip(self, t: TriangleNode, r: TriangleNode, e: Edge):
         tx = t.get_opp_point(e)
         rx = r.get_opp_point(e)
-        new_nodes = [TriangleNode(tx, rx, x) for x in e.points]
+        new_nodes = [
+            TriangleNode(tx, rx, self.raw_to_point[x]) for x in e.points
+        ]
         t.children = new_nodes
         r.children = new_nodes
 
@@ -133,21 +156,25 @@ class HistoryDAG:
         return node
 
     def insert(self, p: Point):
+        print(f"inserting point {p.x}, {p.y}, {p.z}")
         leaf = self.get_leaf(p)
+        print(f"leaf is {leaf.points}")
         leaf.subdivide(p)
 
         # update outer edge adjacencies
         for child in leaf.children:
             e = child.get_opp_edge(p)
-            if e in self.edge_to_tris:
-                v = self.edge_to_tris[e]
-                outer_tri = v[1] if v[0] == leaf else v[0]
-                self.edge_to_tris[e] = [outer_tri, child]
+            # if e in self.edge_to_tris:
+            v = self.edge_to_tris[e]
+            outer_tri = v[1] if v[0] == leaf else v[0]
+            self.edge_to_tris[e] = [outer_tri, child]
 
         # update inner edges adjacencies
         for q in leaf.points:
             e = Edge(p, q)
-            tris = [tn for tn in leaf.children if p in tn.points and q in tn.points]
+            tris = [
+                tn for tn in leaf.children if p in tn.points and q in tn.points
+            ]
             self.edge_to_tris[e] = tris
 
         self.enforce_delaunay(p, leaf.children)

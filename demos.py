@@ -137,6 +137,7 @@ def DAG_subdivide_demo():
     fig, ax = plt.subplots(4, 4)
     for i in range(4):
         for j in range(4):
+            print(f"Working on plot {i}, {j}")
             num_points = 4
             ch_triangle = False
             while not ch_triangle:
@@ -309,12 +310,12 @@ def one_big():
 
 
 if __name__ == "__main__":
-    triangle_membership_demo()
-    convex_hull_demo()
-    fan_demo()
-    corrected_fan_demo()
+    # triangle_membership_demo()
+    # convex_hull_demo()
+    # fan_demo()
+    # corrected_fan_demo()
     DAG_subdivide_demo()
-    two_subdivide_demo()
-    det_two_subdivide_demo()
-    fan_and_insert_demo()
-    one_big()
+    # two_subdivide_demo()
+    # det_two_subdivide_demo()
+    # fan_and_insert_demo()
+    # one_big()
