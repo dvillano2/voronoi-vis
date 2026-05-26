@@ -136,17 +136,14 @@ def corrected_fan_demo():
 
 
 def DAG_subdivide_demo():
-    fig, ax = plt.subplots(4, 4, sharex=True, sharey=True)
-    for i in range(4):
+    rows = 3
+    cols = 3
+    fig, ax = plt.subplots(rows, cols, sharex=True, sharey=True)
+    plt.setp(ax, xlim=(-125, 125), ylim=(-125, 125))
+    for i in range(rows):
         dag = HistoryDAG()
         points = []
-        for _ in range(2):
-            new_x = random.randint(-100, 100)
-            new_y = random.randint(-100, 100)
-            p = Point(new_x, new_y)
-            points.append(p)
-            dag.insert(p)
-        for j in range(4):
+        for j in range(cols):
             # print(f"Working on plot {i}, {j}")
             new_x = random.randint(-100, 100)
             new_y = random.randint(-100, 100)

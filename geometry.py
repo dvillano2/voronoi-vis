@@ -1,6 +1,7 @@
 from __future__ import annotations
 from math import sqrt
 from dataclasses import dataclass, field
+import random
 
 """
 assumptions:
@@ -67,6 +68,38 @@ class Edge:
         self.p = self.points[0]
         self.q = self.points[1]
         self.is_finite = all(e.is_finite for e in self.points)
+
+    def plot(self, ax, color):
+        if self.is_finite:
+            ax.plot(
+                [p.x for p in self.points],
+                [p.y for p in self.points],
+                c=color,
+            )
+        elif self.p.is_finite or self.q.is_finite:
+            ax.relim()
+            ax.autoscale_view()
+            x_min, x_max = ax.get_xlim()
+            y_min, y_max = ax.get_ylim()
+            z = self.p if self.p.is_finite else self.q
+            w = self.q if z == self.p else self.p
+            jump = 1
+            path_x = z.x + jump * w.x
+            path_y = z.y + jump * w.y
+            while x_min <= path_x <= x_max and y_min <= path_y <= y_max:
+                jump += 1
+                path_x = z.x + (jump + 1) * w.x
+                path_y = z.y + (jump + 1) * w.y
+            path_x -= w.x
+            path_y -= w.y
+
+            ax.plot(
+                [z.x, path_x],
+                [z.y, path_y],
+                linestyle="dotted",
+                color=color,
+                linewidth=1,
+            )
 
     # for debug only
     def __repr__(self):
@@ -145,12 +178,10 @@ class Triangle:
         self.is_finite = all(p.is_finite for p in self.points)
 
     def plot(self, ax):
-        if not self.is_finite:
-            return
-        ax.plot(
-            [p.x for e in self.edges for p in e.points],
-            [p.y for e in self.edges for p in e.points],
-        )
+        colors = ["b", "g", "r", "c", "m"]
+        color = random.choice(colors)
+        for e in self.edges:
+            e.plot(ax, color)
 
     def _sort(self, rep_pairs):
         def cos_comp(ref_p: Point, p: Point):
@@ -183,7 +214,9 @@ class Triangle:
 
     def get_opp_edge(self, p: Point):
         if p not in self.points:
-            raise ValueError("point must be vertex of triangle")
+            raise ValueError(
+                f"point must be vertex of triangle \n trying to get edge opp {p} for triangle with points (self.points)"
+            )
         for e in self.edges:
             if p not in e.points:
                 return e

@@ -168,29 +168,53 @@ def circle_test(t: TriangleNode, r: TriangleNode, e: Edge):
     present_point = t.get_opp_point(e)
     last_point = r.get_opp_point(e)
 
-    if not last_point.is_finite or not present_point.is_finite:
+    # should not flip edge at infinity
+    if not e.p.is_finite and not e.q.is_finite:
+        return False
+    # should not flip to edge at infinity
+    if not present_point.is_finite and not last_point.q.is_finite:
         return False
 
-    if any(not p.is_finite for p in e.points):
-        if not t.is_finite or not r.is_finite:
-            return True
-        # refactor
-        tripled_t = t.triple()
-        tripled_r = r.triple()
-        a, b = present_point.x, present_point.y
-        z, w = last_point.x, last_point.y
-        interpolated_point_1 = Point(a + z, 2 * b + 2 * w)
-        interpolated_point_2 = Point(2 * a + 2 * z, b + w)
-        condition_1 = tripled_t.contains(
-            interpolated_point_1
-        ) or tripled_r.contains(interpolated_point_2)
-        condition_2 = tripled_t.contains(
-            interpolated_point_2
-        ) or tripled_r.contains(interpolated_point_2)
-        if condition_1 or condition_2:
-            return False
-        return True
+    # don't flip finite edge to infinte edge
+    if (e.p.is_finite and e.q.is_finite) and (
+        not present_point.is_finite or not last_point.is_finite
+    ):
+        return False
 
+    ### SUGGESTED RULE FOR FLIPPING RAY TO RAY:
+    ### IF NIEGHOBOR HAS MORE INFINITE POINTS, FLIP
+    ### ELSE DONT
+
+    # if infinite edge to be flipped crossed with
+    # finite edge that replaces it, do it,
+    # otherwise don't
+    if not e.p.is_finite or not e.q.is_finite:
+        # refactor
+
+        # points lie on the same side of the line
+        # so
+        if Point.is_left(e.p, e.q, present_point) == Point.is_left(
+            e.p, e.q, last_point
+        ):
+            return False
+
+        # tripled_t = t.triple()
+        # tripled_r = r.triple()
+        # a, b = present_point.x, present_point.y
+        # z, w = last_point.x, last_point.y
+        # interpolated_point_1 = Point(a + z, 2 * b + 2 * w)
+        # interpolated_point_2 = Point(2 * a + 2 * z, b + w)
+        # condition_1 = tripled_t.contains(
+        #     interpolated_point_1
+        # ) or tripled_r.contains(interpolated_point_2)
+        # condition_2 = tripled_t.contains(
+        #     interpolated_point_2
+        # ) or tripled_r.contains(interpolated_point_2)
+        # if condition_1 or condition_2:
+        #     return False
+        # return True
+
+    # if everything is finite, go back to circle test
     def pull_coords(p: Point):
         return [p.x, p.y, p.x**2 + p.y**2, 1]
 
