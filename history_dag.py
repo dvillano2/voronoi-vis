@@ -206,6 +206,8 @@ def circle_test(t: TriangleNode, r: TriangleNode, e: Edge):
         raise ValueError("edges must belong to both triangles")
     present_point = t.get_opp_point(e)
     last_point = r.get_opp_point(e)
+    if e.is_finite and not (present_point.is_finite and last_point.is_finite):
+        return False
     if not all([e.is_finite, present_point.is_finite, last_point.is_finite]):
         return True
 

@@ -137,7 +137,7 @@ def corrected_fan_demo():
 
 def DAG_subdivide_demo():
     rows = 5
-    cols = 3
+    cols = 6
     fig, ax = plt.subplots(rows, cols, sharex=True, sharey=True)
     plt.setp(ax, xlim=(-125, 125), ylim=(-125, 125))
     for i in range(rows):
