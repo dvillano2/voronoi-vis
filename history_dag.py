@@ -184,7 +184,7 @@ def circle_test(t: TriangleNode, r: TriangleNode, e: Edge):
         return False
     # should not flip to edge at infinity
     if not present_point.is_finite and not last_point.is_finite:
-    return False
+        return False
 
     # DUMMY FOR TESTS
     if not e.p.is_finite or not e.q.is_finite:
