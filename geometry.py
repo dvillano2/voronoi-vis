@@ -68,6 +68,20 @@ class Edge:
         self.p = self.points[0]
         self.q = self.points[1]
         self.is_finite = all(e.is_finite for e in self.points)
+        self.totally_infinite = all(not e.is_finite for e in self.points)
+
+    @staticmethod
+    def cross(e: Edge, f: Edge):
+        if e.totally_infinite or f.totally_infinite:
+            raise ValueError("totally infinite edges do not cross anything")
+        p = f.p
+        q = f.q
+        if not p.is_finite and q.is_finite:
+            p, q = q, p
+        direction = Point.sub(p, q)
+        direction.is_finite = False
+        tri = Triangle(e.p, e.q, direction)
+        return tri.contains(p) != tri.contains(q)
 
     def plot(self, ax, color):
         if self.is_finite:
@@ -196,6 +210,8 @@ class Triangle:
         )
 
     def contains(self, x: Point):
+        if not x.is_finite:
+            return False
         for point, next_point in looped_pairs(self.points):
             if not point.is_finite and not next_point.is_finite:
                 continue
