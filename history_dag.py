@@ -72,8 +72,34 @@ class HistoryDAG:
     #        print("size of edge dict:", len(self.edge_to_tris))
     #        print("total leaves:", len(self.get_leaves()))
 
+    # FAKE ENUM, SORT LATER
+    # def _sort_candidates(self, p: Point, cand: TriangleNode):
+    #     """p is finite"""
+    #     e = cand.get_opp_edge(p)
+    #     if e.is_finite:
+    #         return 0
+    #     if not e.totally_infinite:
+    #         other_triangle = [t for t in self.edge_to_tris[e] if e != cand][0]
+    #         if other_triangle.get_opp_point(e).is_finite:
+    #             return 1
+    #         return 2
+    #     return 3
+
     def enforce_delaunay(self, p: Point, cands: list[TriangleNode]):
+        """p is finite"""
+        # finite_opp: list[TriangleNode] = [
+        #     cand for cand in cands if self._sort_candidates(p, cand) == 0
+        # ]
+        # infinite_to_finite: list[TriangleNode] = [
+        #     cand for cand in cands if self._sort_candidates(p, cand) == 1
+        # ]
+        # infinite_to_infinite: list[TriangleNode] = [
+        #     cand for cand in cands if self._sort_candidates(p, cand) == 2
+        # ]
+        # while
+
         stack = list(cands)
+        stack.sort(key=lambda x: 0 if x.is_finite else 1)
         while stack:
             node = stack.pop()
             if node.children:
@@ -84,7 +110,7 @@ class HistoryDAG:
                 # print("enforce_delaunay: early exit on conv hull edge")
                 continue
             t, r = self.edge_to_tris[opp_edge]
-            if circle_test(t, r, opp_edge):
+            if crossing_test(t, r, opp_edge) and circle_test(t, r, opp_edge):
                 new_nodes = self.flip(t, r, opp_edge)
                 stack += new_nodes
                 # print("STACK", stack)
@@ -112,8 +138,8 @@ class HistoryDAG:
                     self.edge_to_tris[local_edge] = [node, to_keep[0]]
         del self.edge_to_tris[e]
 
-        print(f"flip - input triangles: {t.points}{r.points}")
-        print(f"flip - output triangles: {[t.points for t in new_nodes]}")
+        # print(f"flip - input triangles: {t.points}{r.points}")
+        # print(f"flip - output triangles: {[t.points for t in new_nodes]}")
         return new_nodes
 
     def get_leaves(self):
@@ -162,11 +188,26 @@ class HistoryDAG:
         print(f"THERE ARE {len(self.edge_to_tris)} EDGES IN THE DICT")
 
 
+def crossing_test(t: TriangleNode, r: TriangleNode, e: Edge):
+    if e.totally_infinite:
+        return False
+    present_point = t.get_opp_point(e)
+    last_point = r.get_opp_point(e)
+    return Edge.cross(e, Edge(present_point, last_point))
+
+
 def circle_test(t: TriangleNode, r: TriangleNode, e: Edge):
+    """
+    no longer symmetric in t and r,
+    should be passed to a refactor later,
+    but for now just trying to get it working
+    """
     if e not in t.edges + r.edges:
         raise ValueError("edges must belong to both triangles")
     present_point = t.get_opp_point(e)
     last_point = r.get_opp_point(e)
+    if not all([e.is_finite, present_point.is_finite, last_point.is_finite]):
+        return True
 
     # plan for deterimining flips:
     # rule: never flip or flip to totally infinite edge
@@ -178,25 +219,6 @@ def circle_test(t: TriangleNode, r: TriangleNode, e: Edge):
     # order: first infinte edge to infinte edge.. greedy on new
     # point... give that point as many infinite edges as possible
     # then infinite to finite, then finite to finite
-
-    # should not flip edge at infinity
-    if not e.p.is_finite and not e.q.is_finite:
-        return False
-    # should not flip to edge at infinity
-    if not present_point.is_finite and not last_point.is_finite:
-        return False
-
-    # DUMMY FOR TESTS
-    if not e.p.is_finite or not e.q.is_finite:
-        return False
-    # should not flip to edge at infinity
-    if not present_point.is_finite or not last_point.is_finite:
-        return False
-    # don't flip finite edge to infinte edge
-    if (e.p.is_finite and e.q.is_finite) and (
-        not present_point.is_finite or not last_point.is_finite
-    ):
-        return False
 
     ### SUGGESTED RULE FOR FLIPPING RAY TO RAY:
     ### IF NIEGHOBOR HAS MORE INFINITE POINTS, FLIP

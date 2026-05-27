@@ -27,12 +27,12 @@ class Point:
         return p.x * q.x + p.y * q.y
 
     @staticmethod
-    def sub(p: Point, q: Point):
+    def sub(p: Point, q: Point, is_finite=False):
         if not p.is_finite:
-            return Point(p.x, p.y)
+            return Point(p.x, p.y, is_finite)
         if not q.is_finite:
-            return Point(-q.x, -q.y)
-        return Point(p.x - q.x, p.y - q.y)
+            return Point(-q.x, -q.y, is_finite)
+        return Point(p.x - q.x, p.y - q.y, is_finite)
 
     @staticmethod
     def orthogonal(p: Point, q: Point):
@@ -67,7 +67,7 @@ class Edge:
         self.points = tuple(sorted((p, q)))
         self.p = self.points[0]
         self.q = self.points[1]
-        self.is_finite = all(e.is_finite for e in self.points)
+        self.is_finite = p.is_finite and q.is_finite
         self.totally_infinite = all(not e.is_finite for e in self.points)
 
     @staticmethod
@@ -78,8 +78,7 @@ class Edge:
         q = f.q
         if not p.is_finite and q.is_finite:
             p, q = q, p
-        direction = Point.sub(p, q)
-        direction.is_finite = False
+        direction = Point.sub(p, q, False)
         tri = Triangle(e.p, e.q, direction)
         if not q.is_finite:
             return tri.contains(p)
@@ -233,7 +232,7 @@ class Triangle:
     def get_opp_edge(self, p: Point):
         if p not in self.points:
             raise ValueError(
-                f"point must be vertex of triangle \n trying to get edge opp {p} for triangle with points (self.points)"
+                f"point must be vertex of triangle \n trying to get edge opp {p} for triangle with points {self.points}"
             )
         for e in self.edges:
             if p not in e.points:
