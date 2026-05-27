@@ -81,6 +81,8 @@ class Edge:
         direction = Point.sub(p, q)
         direction.is_finite = False
         tri = Triangle(e.p, e.q, direction)
+        if not q.is_finite:
+            return tri.contains(p)
         return tri.contains(p) != tri.contains(q)
 
     def plot(self, ax, color):
