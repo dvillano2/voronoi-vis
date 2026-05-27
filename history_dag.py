@@ -168,12 +168,23 @@ def circle_test(t: TriangleNode, r: TriangleNode, e: Edge):
     present_point = t.get_opp_point(e)
     last_point = r.get_opp_point(e)
 
+    # plan for deterimining flips:
+    # rule: never flip or flip to totally infinite edge
+    # rule: never flip finite edge to infinite edge
+    # infinite edge flipped to infinite edge is valid if they cross
+    # infinite edge flipped to finite edge if valid if they cross
+    # above is gauranteed for finite edge to finite edge....
+    # in that case need to defer to circle test
+    # order: first infinte edge to infinte edge.. greedy on new
+    # point... give that point as many infinite edges as possible
+    # then infinite to finite, then finite to finite
+
     # should not flip edge at infinity
     if not e.p.is_finite and not e.q.is_finite:
         return False
     # should not flip to edge at infinity
     if not present_point.is_finite and not last_point.is_finite:
-        return False
+    return False
 
     # DUMMY FOR TESTS
     if not e.p.is_finite or not e.q.is_finite:
@@ -181,7 +192,6 @@ def circle_test(t: TriangleNode, r: TriangleNode, e: Edge):
     # should not flip to edge at infinity
     if not present_point.is_finite or not last_point.is_finite:
         return False
-
     # don't flip finite edge to infinte edge
     if (e.p.is_finite and e.q.is_finite) and (
         not present_point.is_finite or not last_point.is_finite
