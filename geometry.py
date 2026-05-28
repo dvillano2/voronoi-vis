@@ -77,7 +77,7 @@ class Edge:
             raise ValueError("totally infinite edges do not cross anything")
         p = f.p
         q = f.q
-        if not p.is_finite and q.is_finite:
+        if q.is_finite and not p.is_finite:
             p, q = q, p
         direction = Point.sub(p, q, False)
         tri = Triangle(e.p, e.q, direction)
@@ -246,9 +246,6 @@ class Triangle:
                 return e
         print("get opp edge not found: no good")
         return None
-
-    def triple(self):
-        return Triangle(*[Point(3 * p.x, 3 * p.y) for p in self.points])
 
     def __eq__(self, other):
         return isinstance(other, Triangle) and self.points == other.points
