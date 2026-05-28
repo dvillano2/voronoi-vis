@@ -85,12 +85,13 @@ class Edge:
             return tri.contains(p)
         return tri.contains(p) != tri.contains(q)
 
-    def plot(self, ax, color):
+    def plot(self, ax, color, linewidth=0.5):
         if self.is_finite:
             ax.plot(
                 [p.x for p in self.points],
                 [p.y for p in self.points],
                 c=color,
+                linewidth=linewidth,
             )
         elif self.p.is_finite or self.q.is_finite:
             ax.relim()
@@ -132,6 +133,11 @@ class Edge:
 
 
 class PointCloud:
+    """
+    uneeded for infinte triangle
+    do we want to keep convex hull stuff around?
+    """
+
     def __init__(self, points: list[Point]):
         self.infinite_points = [p for p in points if not p.is_finite]
         self.finite_points = [p for p in points if p.is_finite]

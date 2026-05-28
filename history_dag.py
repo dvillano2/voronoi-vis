@@ -14,7 +14,7 @@ from geometry import Edge, Point, Triangle, looped_pairs
 # backlog:
 # - make triangleNode subclass triangle for ergonomics
 # - no point cloud. use inf triangle.
-# - condsider moving containment next node fundtion to DAG if only used once
+# - condsider moving containment next node function to DAG if only used once
 # - tree leaves function
 # - track which points have been added, (to avoid dupes, hull points)
 
@@ -44,7 +44,7 @@ class HistoryDAG:
             Point(0, 1, False), Point(-1, -1, False), Point(1, -1, False)
         )
         self.root = TriangleNode(*root_triangle.points)
-        print(f"root edges are {self.root.edges}")
+        # print(f"root edges are {self.root.edges}")
         self.edge_to_tris: dict[Edge, list[TriangleNode]] = {
             e: [self.root, self.root] for e in self.root.edges
         }
@@ -52,56 +52,8 @@ class HistoryDAG:
             root_triangle: self.root
         }
 
-        # self.root.children = self._get_root_triangles()
-        # self._setup_root_triangles()
-
-    # def _setup_root_triangles(self):
-    #    hull = self.cloud.convex_hull
-    #    ref_pt = hull[0]
-    #    pairs = zip(hull[1:], hull[2:])
-
-    #    for i, (p, q) in enumerate(pairs):
-    #        new_triangle = TriangleNode(ref_pt, p, q)
-    #        if i > 0:
-    #            self.edge_to_tris[Edge(ref_pt, p)] = [
-    #                new_triangle,
-    #                self.root.children[-1],
-    #            ]
-    #        self.root.children.append(new_triangle)
-
-    #    assert len(self.root.children) == len(hull[2:])
-    #    for triangle, p in zip(self.root.children, hull[2:]):
-    #        assert not triangle.children
-    #        self.enforce_delaunay(p, [triangle])
-    #        print("size of edge dict:", len(self.edge_to_tris))
-    #        print("total leaves:", len(self.get_leaves()))
-
-    # FAKE ENUM, SORT LATER
-    # def _sort_candidates(self, p: Point, cand: TriangleNode):
-    #     """p is finite"""
-    #     e = cand.get_opp_edge(p)
-    #     if e.is_finite:
-    #         return 0
-    #     if not e.totally_infinite:
-    #         other_triangle = [t for t in self.edge_to_tris[e] if e != cand][0]
-    #         if other_triangle.get_opp_point(e).is_finite:
-    #             return 1
-    #         return 2
-    #     return 3
-
     def enforce_delaunay(self, p: Point, cands: list[TriangleNode]):
         """p is finite"""
-        # finite_opp: list[TriangleNode] = [
-        #     cand for cand in cands if self._sort_candidates(p, cand) == 0
-        # ]
-        # infinite_to_finite: list[TriangleNode] = [
-        #     cand for cand in cands if self._sort_candidates(p, cand) == 1
-        # ]
-        # infinite_to_infinite: list[TriangleNode] = [
-        #     cand for cand in cands if self._sort_candidates(p, cand) == 2
-        # ]
-        # while
-
         stack = list(cands)
         stack.sort(key=lambda x: 0 if x.is_finite else 1)
         while stack:
@@ -136,13 +88,6 @@ class HistoryDAG:
                 )
             node = self.triangles_present[new_triangle]
             new_nodes.append(node)
-
-        # new_nodes = [
-        #     self.triangles_present.setdefault(
-        #         new_triangle, TriangleNode(*new_triangle.points)
-        #     )
-        #     for new_triangle in new_triangles
-        # ]
 
         t.children = new_nodes
         r.children = new_nodes
@@ -186,10 +131,10 @@ class HistoryDAG:
         return node
 
     def insert(self, p: Point):
-        print(f"INSERTING POINT {p.x}, {p.y}")
+        # print(f"INSERTING POINT {p.x}, {p.y}")
         leaf = self.get_leaf(p)
         assert not leaf.children
-        print(f"INTO TRIANGLE {leaf.points}")
+        # print(f"INTO TRIANGLE {leaf.points}")
         new_triangles = leaf.subdivide(p)
         for new_triangle in new_triangles:
             if new_triangle in self.triangles_present:
@@ -199,7 +144,7 @@ class HistoryDAG:
                 self.triangles_present[new_triangle] = new_node
                 leaf.children.append(new_node)
 
-        print(f"subdivided leaf is \n {leaf.points}")
+        # print(f"subdivided leaf is \n {leaf.points}")
 
         # update outer edge adjacencies
         for child in leaf.children:
@@ -218,7 +163,7 @@ class HistoryDAG:
             self.edge_to_tris[e] = tris
 
         self.enforce_delaunay(p, leaf.children)
-        print(f"THERE ARE {len(self.edge_to_tris)} EDGES IN THE DICT")
+        # print(f"THERE ARE {len(self.edge_to_tris)} EDGES IN THE DICT")
 
 
 def crossing_test(t: TriangleNode, r: TriangleNode, e: Edge):
@@ -239,54 +184,14 @@ def circle_test(t: TriangleNode, r: TriangleNode, e: Edge):
         raise ValueError("edges must belong to both triangles")
     present_point = t.get_opp_point(e)
     last_point = r.get_opp_point(e)
+
+    # dont switch finite to infinte point
     if e.is_finite and not (present_point.is_finite and last_point.is_finite):
         return False
+    # besides above, if its not all finite, cross test should
+    # determine whether flip get fired
     if not all([e.is_finite, present_point.is_finite, last_point.is_finite]):
         return True
-
-    # plan for deterimining flips:
-    # rule: never flip or flip to totally infinite edge
-    # rule: never flip finite edge to infinite edge
-    # infinite edge flipped to infinite edge is valid if they cross
-    # infinite edge flipped to finite edge if valid if they cross
-    # above is gauranteed for finite edge to finite edge....
-    # in that case need to defer to circle test
-    # order: first infinte edge to infinte edge.. greedy on new
-    # point... give that point as many infinite edges as possible
-    # then infinite to finite, then finite to finite
-
-    ### SUGGESTED RULE FOR FLIPPING RAY TO RAY:
-    ### IF NIEGHOBOR HAS MORE INFINITE POINTS, FLIP
-    ### ELSE DONT
-
-    # if infinite edge to be flipped crossed with
-    # finite edge that replaces it, do it,
-    # otherwise don't
-    # if not e.p.is_finite or not e.q.is_finite:
-    # refactor
-
-    # points lie on the same side of the line
-    # so
-    # if Point.is_left(e.p, e.q, present_point) == Point.is_left(
-    #     e.p, e.q, last_point
-    # ):
-    #     return False
-
-    # tripled_t = t.triple()
-    # tripled_r = r.triple()
-    # a, b = present_point.x, present_point.y
-    # z, w = last_point.x, last_point.y
-    # interpolated_point_1 = Point(a + z, 2 * b + 2 * w)
-    # interpolated_point_2 = Point(2 * a + 2 * z, b + w)
-    # condition_1 = tripled_t.contains(
-    #     interpolated_point_1
-    # ) or tripled_r.contains(interpolated_point_2)
-    # condition_2 = tripled_t.contains(
-    #     interpolated_point_2
-    # ) or tripled_r.contains(interpolated_point_2)
-    # if condition_1 or condition_2:
-    #     return False
-    # return True
 
     # if everything is finite, go back to circle test
     def pull_coords(p: Point):

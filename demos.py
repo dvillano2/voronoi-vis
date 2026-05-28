@@ -136,26 +136,25 @@ def corrected_fan_demo():
 
 
 def DAG_subdivide_demo():
-    rows = 5
-    cols = 6
+    rows = 8
+    cols = 13
     fig, ax = plt.subplots(rows, cols, sharex=True, sharey=True)
-    plt.setp(ax, xlim=(-12500, 12500), ylim=(-12500, 12500))
+    plt.setp(ax, xlim=(-15500, 15500), ylim=(-15500, 15500))
+    plt.xticks([])
+    plt.yticks([])
     for i in range(rows):
         dag = HistoryDAG()
         points = []
         for j in range(cols):
             # print(f"Working on plot {i}, {j}")
-            new_x = random.randint(-100, 100)
-            new_y = random.randint(-100, 100)
+            new_x = random.randint(-12500, 12500)
+            new_y = random.randint(-12500, 12500)
             p = Point(new_x, new_y)
             points.append(p)
             dag.insert(p)
             for t_node in dag.get_leaves():
                 t_node.plot(ax[i, j])
-            ax[i, j].scatter(
-                [p.x for p in points],
-                [p.y for p in points],
-            )
+            ax[i, j].scatter([p.x for p in points], [p.y for p in points], s=2)
     plt.tight_layout()
     plt.show()
 
