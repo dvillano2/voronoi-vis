@@ -139,7 +139,7 @@ def DAG_subdivide_demo():
     rows = 5
     cols = 6
     fig, ax = plt.subplots(rows, cols, sharex=True, sharey=True)
-    plt.setp(ax, xlim=(-125, 125), ylim=(-125, 125))
+    plt.setp(ax, xlim=(-12500, 12500), ylim=(-12500, 12500))
     for i in range(rows):
         dag = HistoryDAG()
         points = []
@@ -152,6 +152,41 @@ def DAG_subdivide_demo():
             dag.insert(p)
             for t_node in dag.get_leaves():
                 t_node.plot(ax[i, j])
+            ax[i, j].scatter(
+                [p.x for p in points],
+                [p.y for p in points],
+            )
+    plt.tight_layout()
+    plt.show()
+
+
+def problem_dag_insert():
+    """
+    problem is colinearity, last to points have same coordinate
+    sums
+    """
+    xy = [(7, 4), (-37, 43), (29, 67), (-4, 62), (-55, -69), (-49, -75)]
+    rows = 2
+    cols = 6
+    fig, ax = plt.subplots(rows, cols, sharex=True, sharey=True)
+    plt.setp(ax, xlim=(-125, 125), ylim=(-125, 125))
+    for i in range(rows):
+        dag = HistoryDAG()
+        points = []
+        for j in range(cols):
+            print(f"POINT {j}")
+            # print(f"Working on plot {i}, {j}")
+            p = Point(*xy[j])
+            points.append(p)
+            dag.insert(p)
+            for t_node in dag.get_leaves():
+                if t_node.is_finite:
+                    print(f"finite triangle is {t_node.points}")
+                t_node.plot(ax[i, j])
+            for t_node in dag.get_leaves():
+                if not t_node.is_finite:
+                    print(f"infinite triangle is {t_node.points}")
+            print("")
             ax[i, j].scatter(
                 [p.x for p in points],
                 [p.y for p in points],
@@ -177,9 +212,7 @@ def two_subdivide_demo():
                 if big_triangle.contains(Point(new_x, new_y)):
                     points.append(Point(new_x, new_y))
                     break
-        point_cloud = PointCloud(points)
-        dag = HistoryDAG(point_cloud)
-        used = []
+        dag = HistoryDAG()
         for j in range(3):
             for t_node in dag.get_leaves():
                 ax[i, j].plot(
@@ -188,14 +221,11 @@ def two_subdivide_demo():
                 )
             if j == 0:
                 ax[i, j].scatter(
-                    [p.x for p in point_cloud.points],
-                    [p.y for p in point_cloud.points],
+                    [p.x for p in points],
+                    [p.y for p in points],
                 )
-            for p in point_cloud.points:
-                if p not in point_cloud.convex_hull and p not in used:
-                    dag.insert(p)
-                    used.append(p)
-                    break
+            p = points.pop()
+            dag.insert(p)
 
     plt.tight_layout()
     plt.show()
@@ -308,8 +338,9 @@ if __name__ == "__main__":
     # convex_hull_demo()
     # fan_demo()
     # corrected_fan_demo()
-    DAG_subdivide_demo()
+    # DAG_subdivide_demo()
     # two_subdivide_demo()
     # det_two_subdivide_demo()
     # fan_and_insert_demo()
     # one_big()
+    problem_dag_insert()

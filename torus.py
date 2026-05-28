@@ -11,7 +11,7 @@ def sample_ring(inner, outer, pulls):
     while len(points) < pulls:
         new_x = random.randint(-outer, outer)
         new_y = random.randint(-inner, inner)
-        if (inner_sq < new_x**2) + (new_y**2 < outer_sq):
+        if inner_sq < new_x**2 + new_y**2 < outer_sq:
             points.append(Point(new_x, new_y))
     return points
 
@@ -33,7 +33,7 @@ def distribution_ratios(tiers):
 
 def torus():
     tiers = 20
-    num_points = 8000
+    num_points = 10000
     outer_edge = 10000000
     outer_circle = 3 * outer_edge / 4
     inner_circle = outer_edge / 4
@@ -44,18 +44,22 @@ def torus():
     for [inner, outer], pulls in zip(torus_tiers, tiered_totals):
         points.extend(sample_ring(inner, outer, pulls))
 
-    point_cloud = PointCloud(points)
-    dag = HistoryDAG(point_cloud)
-    to_insert = set(point_cloud.points) - set(point_cloud.convex_hull)
-    while to_insert:
-        new_point = to_insert.pop()
-        dag.insert(new_point)
+    dag = HistoryDAG()
+    # point_cloud = PointCloud(points)
+    # dag = HistoryDAG(point_cloud)
+    # to_insert = set(point_cloud.points) - set(point_cloud.convex_hull)
+    # while to_insert:
+    #     new_point = to_insert.pop()
+    #     dag.insert(new_point)
+    plt.gca().set_aspect("equal")
+    for point in points:
+        dag.insert(point)
     for t_node in dag.get_leaves():
-        plt.gca().set_aspect("equal")
-        plt.plot(
-            [p.x for e in t_node.edges for p in e.points],
-            [p.y for e in t_node.edges for p in e.points],
-        )
+        if t_node.is_finite:
+            plt.plot(
+                [p.x for e in t_node.edges for p in e.points],
+                [p.y for e in t_node.edges for p in e.points],
+            )
 
     plt.show()
 

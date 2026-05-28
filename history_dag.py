@@ -1,3 +1,4 @@
+from __future__ import annotations
 import numpy as np
 from geometry import Edge, Point, Triangle, looped_pairs
 
@@ -34,18 +35,21 @@ class TriangleNode(Triangle):
             raise ValueError(
                 "To subdivide triangle with x, x must be inside the triangle"
             )
-        for y, z in looped_pairs(self.points):
-            self.children.append(TriangleNode(x, y, z))
+        return [Triangle(x, y, z) for y, z in looped_pairs(self.points)]
 
 
 class HistoryDAG:
     def __init__(self):
-        self.root = TriangleNode(
+        root_triangle = Triangle(
             Point(0, 1, False), Point(-1, -1, False), Point(1, -1, False)
         )
+        self.root = TriangleNode(*root_triangle.points)
         print(f"root edges are {self.root.edges}")
         self.edge_to_tris: dict[Edge, list[TriangleNode]] = {
             e: [self.root, self.root] for e in self.root.edges
+        }
+        self.triangles_present: dict[Triangle, TriangleNode] = {
+            root_triangle: self.root
         }
 
         # self.root.children = self._get_root_triangles()
@@ -122,7 +126,24 @@ class HistoryDAG:
     def flip(self, t: TriangleNode, r: TriangleNode, e: Edge):
         tx = t.get_opp_point(e)
         rx = r.get_opp_point(e)
-        new_nodes = [TriangleNode(tx, rx, x) for x in e.points]
+
+        new_triangles = [Triangle(tx, rx, x) for x in e.points]
+        new_nodes = []
+        for new_triangle in new_triangles:
+            if new_triangle not in self.triangles_present:
+                self.triangles_present[new_triangle] = TriangleNode(
+                    *new_triangle.points
+                )
+            node = self.triangles_present[new_triangle]
+            new_nodes.append(node)
+
+        # new_nodes = [
+        #     self.triangles_present.setdefault(
+        #         new_triangle, TriangleNode(*new_triangle.points)
+        #     )
+        #     for new_triangle in new_triangles
+        # ]
+
         t.children = new_nodes
         r.children = new_nodes
 
@@ -149,6 +170,7 @@ class HistoryDAG:
         while stack:
             node = stack.pop()
             if node in seen:
+                # print("SEEN")
                 continue
             seen.add(node)
             if not node.children:
@@ -164,9 +186,21 @@ class HistoryDAG:
         return node
 
     def insert(self, p: Point):
-        print(f"inserting point {p.x}, {p.y}")
+        print(f"INSERTING POINT {p.x}, {p.y}")
+        breakpoint()
         leaf = self.get_leaf(p)
-        leaf.subdivide(p)
+        assert not leaf.children
+        print(f"INTO TRIANGLE {leaf.points}")
+        new_triangles = leaf.subdivide(p)
+        for new_triangle in new_triangles:
+            if new_triangle in self.triangles_present:
+                leaf.children.append(self.triangles_present[new_triangle])
+            else:
+                new_node = TriangleNode(*new_triangle.points)
+                self.triangles_present[new_triangle] = new_node
+                leaf.children.append(new_node)
+
+        print(f"subdivided leaf is \n {leaf.points}")
 
         # update outer edge adjacencies
         for child in leaf.children:

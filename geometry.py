@@ -9,10 +9,11 @@ assumptions:
 """
 
 
-def looped_pairs(points: list[Point]):
+def looped_pairs(points: list[Point] | tuple[Point]):
     if len(points) < 3:
         return zip(points, points[1:])
-    loop = points + [points[0]]
+    inside_points = list(points)
+    loop = inside_points + [inside_points[0]]
     return zip(loop, loop[1:])
 
 
@@ -188,8 +189,8 @@ class Triangle:
             if finite_points:
                 b = max(finite_points, key=lambda z: Point.dot(z, a))
                 sorting_reps[a] = Point(a.x + b.x, a.y + b.y)
-        self.points = self._sort(sorting_reps)
-        self.edges = [Edge(x, y) for x, y in looped_pairs(self.points)]
+        self.points = tuple(self._sort(sorting_reps))
+        self.edges = tuple(Edge(x, y) for x, y in looped_pairs(self.points))
         self.is_finite = all(p.is_finite for p in self.points)
 
     def plot(self, ax):
@@ -220,7 +221,7 @@ class Triangle:
                 return False
         return True
 
-    def get_opp_point(self, e: Edge):
+    def et_opp_point(self, e: Edge):
         if e not in self.edges:
             raise ValueError("edge must be finite side of triangle")
         for p in self.points:
@@ -242,6 +243,12 @@ class Triangle:
 
     def triple(self):
         return Triangle(*[Point(3 * p.x, 3 * p.y) for p in self.points])
+
+    def __eq__(self, other):
+        return isinstance(other, Triangle) and self.points == other.points
+
+    def __hash__(self):
+        return hash(self.points)
 
 
 if __name__ == "__main__":
