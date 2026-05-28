@@ -187,7 +187,6 @@ class HistoryDAG:
 
     def insert(self, p: Point):
         print(f"INSERTING POINT {p.x}, {p.y}")
-        breakpoint()
         leaf = self.get_leaf(p)
         assert not leaf.children
         print(f"INTO TRIANGLE {leaf.points}")

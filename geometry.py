@@ -221,7 +221,7 @@ class Triangle:
                 return False
         return True
 
-    def et_opp_point(self, e: Edge):
+    def get_opp_point(self, e: Edge):
         if e not in self.edges:
             raise ValueError("edge must be finite side of triangle")
         for p in self.points:
