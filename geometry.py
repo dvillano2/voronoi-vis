@@ -2,6 +2,7 @@ from __future__ import annotations
 from math import sqrt
 from dataclasses import dataclass, field
 import random
+import numpy as np
 
 """
 assumptions:
@@ -247,11 +248,32 @@ class Triangle:
         print("get opp edge not found: no good")
         return None
 
-    def __eq__(self, other):
-        return isinstance(other, Triangle) and self.points == other.points
+    def get_circle_center(self):
+        first_mat = np.array([[p.x, p.y, 1] for p in self.points])
+        base_det = 2 * np.linalg.det(first_mat)
+        if base_det == 0:
+            raise ValueError("the three points are colinear")
+        squared_sums = [p.x**2 + p.y**2 for p in self.points]
+        x_mat = np.array(
+            [squared_sums, [p.y for p in self.points], [1 for _ in range(3)]]
+        )
+        x_coord = np.linalg.det(x_mat) / base_det
+        y_mat = np.array(
+            [[p.x for p in self.points], squared_sums, [1 for _ in range(3)]]
+        )
+        y_coord = np.linalg.det(y_mat) / base_det
+        return x_coord, y_coord
 
-    def __hash__(self):
-        return hash(self.points)
+    def get_circle_radius(self):
+        center_x, center_y = self.get_circle_center()
+        x, y = None, None
+        for p in self.points:
+            if p.is_finite:
+                x, y = p.x, p.y
+                break
+        if x is None:
+            raise ValueError("no radius for the totally infinite triangle")
+        return sqrt((x - center_x) ** 2 + (y - center_y) ** 2)
 
 
 if __name__ == "__main__":
